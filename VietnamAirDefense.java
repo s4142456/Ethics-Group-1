@@ -100,6 +100,9 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         currentLevel = level;
         levelData = LevelData.LEVELS[level - 1];
         
+        // Reset lives at the start of each level
+        lives = 2;
+        
         // Initialize player
     player = new Player(WIDTH/2 - 30, HEIGHT - 80, 60, 40, 3, 6,
         levelData.playerSprite);
@@ -131,7 +134,6 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     totalPlanes = 0;
     for (LevelManager.Wave w : wavePlan) totalPlanes += w.count;
     planesShot = 0;
-    planesShot = 0;
         
         // Reset state
         enemySpeedMultiplier = 1.0;
@@ -141,26 +143,6 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     // Reset history panel so it will be created on paint for the intro
     historyPanel = null;
-    }
-    
-    private void initEnemyFormation() {
-        int cols = 8;
-        int rows = 4;
-        int startX = 80;
-        int startY = 60;
-        int spacingX = 80;
-        int spacingY = 60;
-        
-        for (int row = 0; row < rows; row++) {
-            String enemyType = levelData.enemySprites[row % levelData.enemySprites.length];
-            int hp = levelData.enemyHealth[row % levelData.enemyHealth.length];
-            
-            for (int col = 0; col < cols; col++) {
-                double x = startX + col * spacingX;
-                double y = startY + row * spacingY;
-                enemies.add(new EnemyAircraft(x, y, enemyType, hp, levelData.enemyBaseSpeed));
-            }
-        }
     }
     
     @Override
@@ -437,10 +419,6 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.drawString(prompt, promptX, HEIGHT/2);
     }
     
-    private void drawHistory(Graphics2D g2) {
-        // This will be handled by the HistoryPanel class
-    }
-    
     private void drawHUD(Graphics2D g2) {
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.BOLD, 20));
@@ -512,6 +490,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                     state = GameState.MENU;
                     score = 0;
                     currentLevel = 0;
+                    lives = 2;  // Reset lives when restarting game
                     AssetManager.getInstance().playMusic("bgm_menu", true);
                 }
             }

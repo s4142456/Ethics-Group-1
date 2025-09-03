@@ -12,8 +12,18 @@ public class LevelManager {
     public static List<EnemyAircraft> createEnemiesFor(LevelData level, int cols, int rows, int startX, int startY, int spacingX, int spacingY) {
         List<EnemyAircraft> list = new ArrayList<>();
         for (int row = 0; row < rows; row++) {
-            String enemyType = level.enemySprites[row % level.enemySprites.length];
-            int hp = level.enemyHealth[row % level.enemyHealth.length];
+            // For level 1, ensure we use different enemy types within each wave
+            String enemyType;
+            int hp;
+            if (level.level == 1) {
+                // Mix up enemy types more evenly
+                int enemyIndex = (row + cols) % level.enemySprites.length;
+                enemyType = level.enemySprites[enemyIndex];
+                hp = level.enemyHealth[enemyIndex % level.enemyHealth.length];
+            } else {
+                enemyType = level.enemySprites[row % level.enemySprites.length];
+                hp = level.enemyHealth[row % level.enemyHealth.length];
+            }
             for (int col = 0; col < cols; col++) {
                 double x = startX + col * spacingX;
                 double y = startY + row * spacingY;
@@ -41,17 +51,20 @@ public class LevelManager {
     public static List<Wave> wavesFor(LevelData level) {
         List<Wave> waves = new ArrayList<>();
         if (level.level == 1) {
-            waves.add(new Wave(8, 8, 1, 0));
-            waves.add(new Wave(8, 8, 1, 5000));
-            waves.add(new Wave(8, 8, 2, 7000));
+            // Wave 1: First two types of aircraft
+            waves.add(new Wave(6, 6, 2, 0));
+            // Wave 2: Next two types of aircraft
+            waves.add(new Wave(6, 6, 2, 5000));
+            // Wave 3: All four types mixed
+            waves.add(new Wave(8, 8, 4, 7000));
         } else if (level.level == 2) {
-            waves.add(new Wave(6, 6, 1, 0));
-            waves.add(new Wave(8, 8, 1, 4000));
-            waves.add(new Wave(10, 10, 1, 6000));
+            waves.add(new Wave(6, 2, 3, 0));     // 3 rows for all aircraft types
+            waves.add(new Wave(9, 3, 3, 4000));  // 3 rows for all aircraft types
+            waves.add(new Wave(9, 3, 3, 6000));  // 3 rows for all aircraft types
         } else if (level.level == 3) {
-            waves.add(new Wave(4, 4, 1, 0));
-            waves.add(new Wave(6, 6, 1, 3000));
-            waves.add(new Wave(8, 8, 1, 4000));
+            waves.add(new Wave(4, 2, 2, 0));     // 2 rows for both aircraft types
+            waves.add(new Wave(6, 3, 2, 3000));  // 2 rows for both aircraft types
+            waves.add(new Wave(8, 4, 2, 4000));  // 2 rows for both aircraft types
         } else if (level.level == 4) {
             waves.add(new Wave(2, 2, 1, 0));
             waves.add(new Wave(3, 3, 1, 6000));
