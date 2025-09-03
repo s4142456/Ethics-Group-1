@@ -1,0 +1,534 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Random;
+
+public class VietnamAirDefense extends JFrame {
+    private static final String GAME_TITLE = "Vietnam Air Defense (1946-1972)";
+    private GamePanel gamePanel;
+    
+    public VietnamAirDefense() {
+        // JavaFX check removed; background music is disabled in this build.
+        setTitle(GAME_TITLE);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setResizable(false);
+        
+        gamePanel = new GamePanel();
+        add(gamePanel);
+        pack();
+        setLocationRelativeTo(null);
+        
+        // Preload all assets
+        AssetManager.getInstance();
+        
+        // Clean up resources on window close
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+                AssetManager.getInstance().cleanup();
+            }
+        });
+    }
+    
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            VietnamAirDefense game = new VietnamAirDefense();
+            game.setVisible(true);
+            game.gamePanel.start();
+        });
+    }
+}
+
+class GamePanel extends JPanel implements ActionListener, KeyListener {
+    // Screen dimensions
+    static final int WIDTH = 800;
+    static final int HEIGHT = 600;
+    
+    // Game state
+    private GameState state = GameState.MENU;
+    private int currentLevel = 0;
+    private LevelData levelData;
+    private int score = 0;
+    private int lives = 3;
+    
+    // Game objects
+    private Player player;
+    private List<EnemyAircraft> enemies = new ArrayList<>();
+    private List<LevelManager.Wave> wavePlan = null;
+    private int currentWaveIndex = 0;
+    private long nextWaveTime = 0;
+    private List<Bullet> playerBullets = new ArrayList<>();
+    private List<Bullet> enemyBullets = new ArrayList<>();
+    private List<Explosion> explosions = new ArrayList<>();
+    private int planesShot = 0;
+    private int totalPlanes = 0;
+    private HistoryPanel historyPanel;
+    
+    // Control flags
+    private boolean leftPressed, rightPressed, spacePressed;
+    private boolean upPressed, downPressed;
+    private long lastShotTime = 0;
+    private long shotCooldown = 250; // Adjustable per level
+    
+    // Enemy behavior
+    private double enemySpeedMultiplier = 1.0;
+    private long lastEnemyShot = 0;
+    private long enemyShotCooldown = 900;
+    private Random random = new Random();
+    
+    // Game loop
+    private Timer timer;
+    private static final int FPS = 60;
+    
+    public GamePanel() {
+        setPreferredSize(new Dimension(WIDTH, HEIGHT));
+        setBackground(Color.BLACK);
+        setFocusable(true);
+        addKeyListener(this);
+    }
+    
+    public void start() {
+        timer = new Timer(1000 / FPS, this);
+        timer.start();
+        AssetManager.getInstance().playMusic("bgm_menu", true);
+    }
+    
+    private void startLevel(int level) {
+        currentLevel = level;
+        levelData = LevelData.LEVELS[level - 1];
+        
+        // Initialize player
+    player = new Player(WIDTH/2 - 30, HEIGHT - 80, 60, 40, 3, 6,
+        levelData.playerSprite);
+    // set weapon mode per level: 1=AA,2=SAM,3=MiG,4=SAM
+    int weaponMode = 1;
+    if (level == 1) weaponMode = 1;
+    else if (level == 2) weaponMode = 2;
+    else if (level == 3) weaponMode = 3;
+    else if (level == 4) weaponMode = 2;
+    player.setWeaponMode(weaponMode);
+    // adjust shot cooldowns per weapon
+    if (weaponMode == 1) shotCooldown = 250;
+    else if (weaponMode == 2) shotCooldown = 500;
+    else if (weaponMode == 3) shotCooldown = 150;
+    // enemy fire rate per level
+    enemyShotCooldown = (long)(900 / levelData.enemyBaseSpeed);
+        
+        // Clear and create enemies
+        enemies.clear();
+        playerBullets.clear();
+        enemyBullets.clear();
+        
+    // Prepare wave plan and compute total planes
+    wavePlan = LevelManager.wavesFor(levelData);
+    currentWaveIndex = 0;
+    nextWaveTime = System.currentTimeMillis();
+    enemies.clear();
+    // estimate total planes from waves
+    totalPlanes = 0;
+    for (LevelManager.Wave w : wavePlan) totalPlanes += w.count;
+    planesShot = 0;
+    planesShot = 0;
+        
+        // Reset state
+        enemySpeedMultiplier = 1.0;
+        
+        // Start level music
+    AssetManager.getInstance().playMusic(levelData.music, true);
+
+    // Reset history panel so it will be created on paint for the intro
+    historyPanel = null;
+    }
+    
+    private void initEnemyFormation() {
+        int cols = 8;
+        int rows = 4;
+        int startX = 80;
+        int startY = 60;
+        int spacingX = 80;
+        int spacingY = 60;
+        
+        for (int row = 0; row < rows; row++) {
+            String enemyType = levelData.enemySprites[row % levelData.enemySprites.length];
+            int hp = levelData.enemyHealth[row % levelData.enemyHealth.length];
+            
+            for (int col = 0; col < cols; col++) {
+                double x = startX + col * spacingX;
+                double y = startY + row * spacingY;
+                enemies.add(new EnemyAircraft(x, y, enemyType, hp, levelData.enemyBaseSpeed));
+            }
+        }
+    }
+    
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (state == GameState.PLAYING) {
+            updateGame();
+        }
+        repaint();
+    }
+    
+    private void updateGame() {
+        // Player movement
+        double dx = 0, dy = 0;
+        if (currentLevel == 3) {
+            // free two-axis movement in level 3
+            if (leftPressed) dx -= player.getSpeed();
+            if (rightPressed) dx += player.getSpeed();
+            if (upPressed) dy -= player.getSpeed();
+            if (downPressed) dy += player.getSpeed();
+        } else {
+            // only horizontal movement elsewhere
+            if (leftPressed) dx -= player.getSpeed();
+            if (rightPressed) dx += player.getSpeed();
+        }
+        // normalize diagonal speed to avoid faster diagonal movement
+        if (dx != 0 && dy != 0) {
+            double inv = 1.0 / Math.sqrt(2);
+            dx *= inv; dy *= inv;
+        }
+        player.move(dx, dy);
+
+        // Keep player in bounds
+        double px = player.getX();
+        px = Math.max(10, Math.min(WIDTH - player.getWidth() - 10, px));
+        double py = player.getY();
+        py = Math.max(10, Math.min(HEIGHT - player.getHeight() - 10, py));
+        player.move(px - player.getX(), py - player.getY());
+        
+        // Player shooting
+        long now = System.currentTimeMillis();
+        if (spacePressed && now - lastShotTime > shotCooldown) {
+            playerBullets.add(player.shoot(levelData.weaponSound));
+            lastShotTime = now;
+        }
+        
+        // If there are no active enemies but waves remain, spawn next wave immediately
+        if (wavePlan != null && currentWaveIndex < wavePlan.size() && enemies.isEmpty()) {
+            nextWaveTime = System.currentTimeMillis();
+        }
+
+        // Spawn waves if needed
+        if (wavePlan != null && currentWaveIndex < wavePlan.size() && System.currentTimeMillis() >= nextWaveTime) {
+            LevelManager.Wave w = wavePlan.get(currentWaveIndex);
+            // create w.count enemies spread across the top area
+            int cols = Math.max(1, Math.min(12, w.cols));
+            int rows = Math.max(1, w.rows);
+            int startX = 60 + (random.nextInt(40));
+            int startY = 40 + (currentWaveIndex * 20);
+            List<EnemyAircraft> newOnes = LevelManager.createEnemiesFor(levelData, cols, rows, startX, startY, 60, 50);
+            enemies.addAll(newOnes);
+            currentWaveIndex++;
+            nextWaveTime = System.currentTimeMillis() + w.delayMs;
+        }
+
+        // Update enemies
+        for (EnemyAircraft enemy : enemies) {
+            enemy.updateFormation(WIDTH, HEIGHT, player);
+            if (enemy.reachedBottom(HEIGHT) || enemy.getBounds().intersects(player.getBounds())) {
+                gameOver(false);
+                return;
+            }
+        }
+    // (MiG vertical movement handled earlier with normalized dx/dy)
+        
+        // Enemy shooting
+        if (now - lastEnemyShot > enemyShotCooldown && !enemies.isEmpty()) {
+            EnemyAircraft shooter = enemies.get(random.nextInt(enemies.size()));
+            if (random.nextDouble() < 0.3) {
+                double bulletX = shooter.getX() + shooter.getWidth()/2 - 2;
+                double bulletY = shooter.getY() + shooter.getHeight();
+                enemyBullets.add(new Bullet(bulletX, bulletY, 5.0, false, "mig_shoot"));
+            }
+            lastEnemyShot = now;
+        }
+        
+        // Update bullets
+        updateBullets();
+        
+        // Check collisions
+        checkCollisions();
+        
+        // Check win condition: only when all waves spawned and no enemies remain
+        if (enemies.isEmpty() && (wavePlan == null || currentWaveIndex >= wavePlan.size())) {
+            victory();
+        }
+    }
+    
+    private void updateBullets() {
+        // Update player bullets
+        Iterator<Bullet> it = playerBullets.iterator();
+        while (it.hasNext()) {
+            Bullet bullet = it.next();
+            bullet.update();
+            if (bullet.isOffscreen(HEIGHT)) {
+                it.remove();
+            }
+        }
+        
+        // Update enemy bullets
+        it = enemyBullets.iterator();
+        while (it.hasNext()) {
+            Bullet bullet = it.next();
+            bullet.update();
+            if (bullet.isOffscreen(HEIGHT)) {
+                it.remove();
+            }
+        }
+    }
+    
+    private void checkCollisions() {
+        // Check player bullets vs enemies
+        Iterator<Bullet> itB = playerBullets.iterator();
+        while (itB.hasNext()) {
+            Bullet bullet = itB.next();
+            Rectangle bulletBounds = bullet.getBounds();
+            
+            Iterator<EnemyAircraft> itE = enemies.iterator();
+            while (itE.hasNext()) {
+                EnemyAircraft enemy = itE.next();
+                if (bulletBounds.intersects(enemy.getBounds())) {
+                    enemy.damage(bullet.getDamage());
+                    itB.remove();
+                    
+                    if (enemy.isDestroyed()) {
+                        itE.remove();
+                        score += 100;
+                        planesShot++;
+                        explosions.add(new Explosion(enemy.getX() + enemy.getWidth()/2, enemy.getY() + enemy.getHeight()/2));
+                        // Speed up remaining enemies
+                        enemySpeedMultiplier += 0.08;
+                        enemies.forEach(e -> e.increaseSpeed(enemySpeedMultiplier));
+                    } else {
+                        explosions.add(new Explosion(enemy.getX() + enemy.getWidth()/2, enemy.getY() + enemy.getHeight()/2));
+                    }
+                    break;
+                }
+            }
+        }
+        
+        // Check enemy bullets vs player
+        Iterator<Bullet> itEB = enemyBullets.iterator();
+        while (itEB.hasNext()) {
+            Bullet bullet = itEB.next();
+            if (bullet.getBounds().intersects(player.getBounds())) {
+        itEB.remove();
+        lives -= bullet.getDamage();
+                explosions.add(new Explosion(player.getX() + player.getWidth()/2, player.getY() + player.getHeight()/2));
+                if (lives <= 0) {
+                    gameOver(false);
+                }
+            }
+        }
+    // Update explosion animations
+    updateExplosions();
+    }
+
+    private void updateExplosions() {
+        Iterator<Explosion> it = explosions.iterator();
+        while (it.hasNext()) {
+            Explosion ex = it.next();
+            if (ex.update()) it.remove();
+        }
+    }
+    
+    private void gameOver(boolean won) {
+        state = won ? GameState.VICTORY : GameState.GAME_OVER;
+        AssetManager.getInstance().stopAllMusic();
+        AssetManager.getInstance().playSound(won ? "victory" : "gameover");
+    }
+    
+    private void victory() {
+        if (currentLevel < LevelData.LEVELS.length) {
+            state = GameState.HISTORY_SUMMARY;
+            // ensure the history panel is recreated and visible immediately
+            historyPanel = null;
+            if (timer != null) timer.stop();
+            AssetManager.getInstance().stopAllMusic();
+            AssetManager.getInstance().playSound("victory");
+            System.out.println("DEBUG: Entering HISTORY_SUMMARY for level " + currentLevel + ", planesShot=" + planesShot + ", totalPlanes=" + totalPlanes);
+            repaint();
+        } else {
+            gameOver(true);
+        }
+    }
+    
+    @Override
+    protected void paintComponent(Graphics g) {
+        super.paintComponent(g);
+        Graphics2D g2 = (Graphics2D) g.create();
+        g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+        
+        switch (state) {
+            case MENU -> drawMenu(g2);
+            case HISTORY_INTRO, HISTORY_SUMMARY -> {
+                // Render history using HistoryPanel
+                if (historyPanel == null) {
+                    if (state == GameState.HISTORY_SUMMARY) {
+                        int total = totalPlanes > 0 ? totalPlanes : (enemies == null ? 0 : enemies.size());
+                        historyPanel = new HistoryPanel(levelData, false, planesShot, total);
+                    } else {
+                        historyPanel = new HistoryPanel(levelData, true);
+                    }
+                }
+                // paint history panel into this panel
+                Graphics pg = g2.create();
+                // debug overlay - indicate we are in history state
+                g2.setColor(new Color(255, 40, 40));
+                g2.setFont(new Font("Arial", Font.BOLD, 18));
+                String dbg = "DEBUG: history state=" + state + " level=" + currentLevel;
+                g2.drawString(dbg, 10, 22);
+                historyPanel.setSize(getWidth(), getHeight());
+                historyPanel.paint(pg);
+                pg.dispose();
+            }
+            case PLAYING -> drawGame(g2);
+            case GAME_OVER -> drawGameOver(g2);
+            case VICTORY -> drawVictory(g2);
+        }
+        
+        g2.dispose();
+    }
+    
+    private void drawGame(Graphics2D g2) {
+        // Draw background
+        Image bg = AssetManager.getInstance().getImage(levelData.background);
+        if (bg != null) {
+            g2.drawImage(bg, 0, 0, WIDTH, HEIGHT, null);
+        }
+        
+        // Draw player
+        player.draw(g2);
+        
+        // Draw enemies
+        for (EnemyAircraft enemy : enemies) {
+            enemy.draw(g2);
+        }
+        
+        // Draw bullets
+        g2.setColor(Color.WHITE);
+        for (Bullet bullet : playerBullets) {
+            bullet.draw(g2);
+        }
+        g2.setColor(new Color(255, 80, 80));
+        for (Bullet bullet : enemyBullets) {
+            bullet.draw(g2);
+        }
+    // Draw explosions
+    for (Explosion ex : explosions) ex.draw(g2);
+        
+        // Draw HUD
+        drawHUD(g2);
+    }
+    
+    private void drawMenu(Graphics2D g2) {
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.BOLD, 36));
+        String title = "Vietnam Air Defense";
+        int titleX = (WIDTH - g2.getFontMetrics().stringWidth(title)) / 2;
+        g2.drawString(title, titleX, HEIGHT/3);
+        
+        g2.setFont(new Font("Arial", Font.PLAIN, 20));
+        String prompt = "Press SPACE to Start";
+        int promptX = (WIDTH - g2.getFontMetrics().stringWidth(prompt)) / 2;
+        g2.drawString(prompt, promptX, HEIGHT/2);
+    }
+    
+    private void drawHistory(Graphics2D g2) {
+        // This will be handled by the HistoryPanel class
+    }
+    
+    private void drawHUD(Graphics2D g2) {
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.BOLD, 20));
+        g2.drawString("Score: " + score, 20, 30);
+        g2.drawString("Lives: " + lives, WIDTH - 100, 30);
+        g2.drawString("Level " + currentLevel, WIDTH/2 - 40, 30);
+    }
+    
+    private void drawGameOver(Graphics2D g2) {
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.BOLD, 48));
+        String text = "Game Over";
+        int x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
+        g2.drawString(text, x, HEIGHT/2);
+        
+        g2.setFont(new Font("Arial", Font.PLAIN, 24));
+        text = "Final Score: " + score;
+        x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
+        g2.drawString(text, x, HEIGHT/2 + 50);
+        
+        g2.setFont(new Font("Arial", Font.PLAIN, 20));
+        text = "Press R to Restart";
+        x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
+        g2.drawString(text, x, HEIGHT/2 + 100);
+    }
+    
+    private void drawVictory(Graphics2D g2) {
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.BOLD, 48));
+        String text = "Victory!";
+        int x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
+        g2.drawString(text, x, HEIGHT/2);
+        
+        g2.setFont(new Font("Arial", Font.PLAIN, 24));
+        text = "Final Score: " + score;
+        x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
+        g2.drawString(text, x, HEIGHT/2 + 50);
+    }
+    
+    @Override
+    public void keyPressed(KeyEvent e) {
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_LEFT -> leftPressed = true;
+            case KeyEvent.VK_RIGHT -> rightPressed = true;
+            case KeyEvent.VK_UP -> upPressed = true;
+            case KeyEvent.VK_DOWN -> downPressed = true;
+            case KeyEvent.VK_SPACE -> {
+                spacePressed = true;
+                if (state == GameState.MENU) {
+                    state = GameState.HISTORY_INTRO;
+                    currentLevel = 1;
+                    startLevel(currentLevel);
+                } else if (state == GameState.HISTORY_INTRO) {
+                    state = GameState.PLAYING;
+                } else if (state == GameState.HISTORY_SUMMARY) {
+                    currentLevel++;
+                    planesShot = 0;
+                    if (currentLevel <= LevelData.LEVELS.length) {
+                        startLevel(currentLevel);
+                        state = GameState.HISTORY_INTRO;
+                        if (timer != null) timer.start();
+                    } else {
+                        state = GameState.VICTORY;
+                    }
+                }
+            }
+            case KeyEvent.VK_R -> {
+                if (state == GameState.GAME_OVER) {
+                    state = GameState.MENU;
+                    score = 0;
+                    currentLevel = 0;
+                    AssetManager.getInstance().playMusic("bgm_menu", true);
+                }
+            }
+        }
+    }
+    
+    @Override
+    public void keyReleased(KeyEvent e) {
+        switch (e.getKeyCode()) {
+            case KeyEvent.VK_LEFT -> leftPressed = false;
+            case KeyEvent.VK_RIGHT -> rightPressed = false;
+            case KeyEvent.VK_UP -> upPressed = false;
+            case KeyEvent.VK_DOWN -> downPressed = false;
+            case KeyEvent.VK_SPACE -> spacePressed = false;
+        }
+    }
+    
+    @Override
+    public void keyTyped(KeyEvent e) {}
+}

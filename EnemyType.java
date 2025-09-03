@@ -1,0 +1,3 @@
+public enum EnemyType {
+    MORANE, DAKOTA, BEARCAT, F105, F4PHANTOM, SKYHAWK, B52
+}
