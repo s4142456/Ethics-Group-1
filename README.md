@@ -56,3 +56,9 @@ Note:
 - Keep both `.java` and `.class` files in the root directory for simplicity
 - Documentation is organized in the `docs/` folder
 - Use the `.bat` scripts to run and setup the game
+
+Game testing comments:
+- The game should start with a page of instructions 
+- The sound is too loud
+- Transitioning from one level to another feels like the game was crashing. The game crashes after level 2
+- The background images are stock photos with the logo of the providers still on the images
