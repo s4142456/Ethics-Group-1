@@ -26,25 +26,27 @@ public class AssetManager {
     
     private void loadAssets() {
         // Load player images
-        loadImage("level1_player", "assets/image/level1_player.jpg");
-        loadImage("level2_player", "assets/image/level2_player.jpg");
-        loadImage("level3_player", "assets/image/level3_player.jpg");
-        loadImage("level4_player", "assets/image/level4_player.jpg");
+        loadImage("level1_player", "assets/image/level1_player.png");
+        loadImage("level2_player", "assets/image/level2_player.png");
+        loadImage("level3_player", "assets/image/level3_player.png");
+        loadImage("level4_player", "assets/image/level4_player.png");
         
         // Load enemy images
-        loadImage("morane", "assets/image/morane.jpg");
-        loadImage("dakota", "assets/image/dakota.jpg");
-        loadImage("bearcat", "assets/image/bearcat.jpg");
-        loadImage("f105", "assets/image/f105.jpg");
-        loadImage("f4phantom", "assets/image/f4phantom.jpeg");
-        loadImage("skyhawk", "assets/image/skyhawk.jpg");
-        loadImage("b52", "assets/image/b52.jpg");
+        loadImage("morane", "assets/image/morane.png");
+        loadImage("dakota", "assets/image/dakota.png");
+        loadImage("bearcat", "assets/image/bearcat.png");
+        loadImage("f105", "assets/image/f105.png");
+        loadImage("f4phantom", "assets/image/f4phantom.png");
+        loadImage("skyhawk", "assets/image/skyhawk.png");
+        loadImage("spitfire", "assets/image/spitfire.png");
+        loadImage("b26", "assets/image/b26.png");
+        loadImage("b52", "assets/image/b52.png");
         
         // Load background images
-        loadImage("bg_level1", "assets/image/bg_level1.jpg");
+        loadImage("bg_level1", "assets/image/bg_level1.png");
         loadImage("bg_level2", "assets/image/bg_level2.jpg");
         loadImage("bg_level3", "assets/image/bg_level3.jpeg");
-        loadImage("bg_level4", "assets/image/bg_level4.jpg");
+        loadImage("bg_level4", "assets/image/bg_level4.png");
         
         // Load WAV sound effects
         loadWavSound("gunfire", "assets/sfx/gunfire.wav");
