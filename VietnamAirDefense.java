@@ -346,6 +346,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         
         switch (state) {
             case MENU -> drawMenu(g2);
+            case INSTRUCTIONS -> drawInstructions(g2);
             case HISTORY_INTRO, HISTORY_SUMMARY -> {
                 // Render history using HistoryPanel
                 if (historyPanel == null) {
@@ -373,6 +374,74 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
         
         g2.dispose();
+    }
+    
+    private void drawInstructions(Graphics2D g2) {
+        // Draw a dark semi-transparent background
+        g2.setColor(new Color(0, 0, 0, 220));
+        g2.fillRect(0, 0, WIDTH, HEIGHT);
+        
+        // Title
+        g2.setColor(Color.YELLOW);
+        g2.setFont(new Font("Arial", Font.BOLD, 32));
+        String title = "Game Instructions";
+        int titleWidth = g2.getFontMetrics().stringWidth(title);
+        g2.drawString(title, (WIDTH - titleWidth) / 2, 80);
+        
+        // Disclaimer
+        g2.setFont(new Font("Arial", Font.ITALIC, 16));
+        g2.setColor(new Color(200, 200, 200));
+        String disclaimer = "This game is only a simulation based on historical events";
+        int disclaimerWidth = g2.getFontMetrics().stringWidth(disclaimer);
+        g2.drawString(disclaimer, (WIDTH - disclaimerWidth) / 2, 110);
+        
+        // Draw instructions with appropriate spacing
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.BOLD, 20));
+        
+        // Controls section
+        int y = 145; // Adjusted to account for the disclaimer
+        int leftMargin = 80;
+        g2.setColor(Color.GREEN);
+        g2.drawString("Controls:", leftMargin, y);
+        y += 30;
+        
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.PLAIN, 18));
+        g2.drawString("• LEFT/RIGHT Arrow Keys: Move aircraft", leftMargin, y); y += 25;
+        g2.drawString("• SPACE Key: Fire weapon", leftMargin, y); y += 25;
+        g2.drawString("• In Level 3: UP/DOWN Arrow Keys: Move aircraft vertically", leftMargin, y); y += 25;
+        g2.drawString("• R Key: Return to menu after defeat or victory", leftMargin, y); y += 40;
+        
+        // Game objectives
+        g2.setColor(Color.GREEN);
+        g2.setFont(new Font("Arial", Font.BOLD, 20));
+        g2.drawString("Objectives:", leftMargin, y); y += 30;
+        
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.PLAIN, 18));
+        g2.drawString("• Destroy all enemy aircraft in each level", leftMargin, y); y += 25;
+        g2.drawString("• Prevent enemy aircraft from reaching the bottom", leftMargin, y); y += 25;
+        g2.drawString("• Avoid getting hit by enemy fire", leftMargin, y); y += 40;
+        
+        // Levels info
+        g2.setColor(Color.GREEN);
+        g2.setFont(new Font("Arial", Font.BOLD, 20));
+        g2.drawString("Levels:", leftMargin, y); y += 30;
+        
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.PLAIN, 18));
+        g2.drawString("• Level 1: 1946 - French invasion - Anti-aircraft guns", leftMargin, y); y += 25;
+        g2.drawString("• Level 2: 1965-1968 - US bombing North Vietnam - SAM missiles", leftMargin, y); y += 25;
+        g2.drawString("• Level 3: 1972 - Vietnamese MiG fighters in combat", leftMargin, y); y += 25;
+        g2.drawString("• Level 4: 1972 - Counter-attack, 'Dien Bien Phu in the Air'", leftMargin, y); y += 40;
+        
+        // Return instructions
+        g2.setColor(Color.YELLOW);
+        g2.setFont(new Font("Arial", Font.BOLD, 20));
+        String backMsg = "Press ESC to return to menu";
+        int backWidth = g2.getFontMetrics().stringWidth(backMsg);
+        g2.drawString(backMsg, (WIDTH - backWidth) / 2, HEIGHT - 40);
     }
     
     private void drawGame(Graphics2D g2) {
@@ -417,6 +486,10 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         String prompt = "Press SPACE to Start";
         int promptX = (WIDTH - g2.getFontMetrics().stringWidth(prompt)) / 2;
         g2.drawString(prompt, promptX, HEIGHT/2);
+        
+        String instructions = "Press I for Instructions";
+        int instructionsX = (WIDTH - g2.getFontMetrics().stringWidth(instructions)) / 2;
+        g2.drawString(instructions, instructionsX, HEIGHT/2 + 40);
     }
     
     private void drawHUD(Graphics2D g2) {
@@ -440,7 +513,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.drawString(text, x, HEIGHT/2 + 50);
         
         g2.setFont(new Font("Arial", Font.PLAIN, 20));
-        text = "Press R to Restart";
+        text = "Press R to Return to Menu";
         x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
         g2.drawString(text, x, HEIGHT/2 + 100);
     }
@@ -456,6 +529,11 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         text = "Final Score: " + score;
         x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
         g2.drawString(text, x, HEIGHT/2 + 50);
+        
+        g2.setFont(new Font("Arial", Font.PLAIN, 20));
+        text = "Press R to Return to Menu";
+        x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
+        g2.drawString(text, x, HEIGHT/2 + 100);
     }
     
     @Override
@@ -465,6 +543,16 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             case KeyEvent.VK_RIGHT -> rightPressed = true;
             case KeyEvent.VK_UP -> upPressed = true;
             case KeyEvent.VK_DOWN -> downPressed = true;
+            case KeyEvent.VK_I -> {
+                if (state == GameState.MENU) {
+                    state = GameState.INSTRUCTIONS;
+                }
+            }
+            case KeyEvent.VK_ESCAPE -> {
+                if (state == GameState.INSTRUCTIONS) {
+                    state = GameState.MENU;
+                }
+            }
             case KeyEvent.VK_SPACE -> {
                 spacePressed = true;
                 if (state == GameState.MENU) {
@@ -486,7 +574,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 }
             }
             case KeyEvent.VK_R -> {
-                if (state == GameState.GAME_OVER) {
+                if (state == GameState.GAME_OVER || state == GameState.VICTORY) {
                     state = GameState.MENU;
                     score = 0;
                     currentLevel = 0;
