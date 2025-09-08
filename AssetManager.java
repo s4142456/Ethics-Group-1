@@ -43,10 +43,10 @@ public class AssetManager {
         loadImage("b52", "assets/image/b52.png");
         
         // Load background images
-        loadImage("bg_level1", "assets/image/bg_level1.png");
+        loadImage("bg_level1", "assets/image/bg_level1.jpg");
         loadImage("bg_level2", "assets/image/bg_level2.jpg");
-        loadImage("bg_level3", "assets/image/bg_level3.jpeg");
-        loadImage("bg_level4", "assets/image/bg_level4.png");
+        loadImage("bg_level3", "assets/image/bg_level3.jpg");
+        loadImage("bg_level4", "assets/image/bg_level4.jpg");
         
         // Load WAV sound effects
         loadWavSound("gunfire", "assets/sfx/gunfire.wav");
