@@ -47,7 +47,10 @@ public class LevelManager {
         return list;
     }
 
-    // Produce a wave plan for the given level
+    // This is where we specified the number of enemies in a stage
+    // count = number of enemies
+    // cols = number of columns in the enemy waves formation
+    // delayMs = time delay (in miliseconds) between waves
     public static List<Wave> wavesFor(LevelData level) {
         List<Wave> waves = new ArrayList<>();
         if (level.level == 1) {
