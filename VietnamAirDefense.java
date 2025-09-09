@@ -74,8 +74,11 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     private long shotCooldown = 250; // Adjustable per level
     
     // Enemy behavior
+    // Increase difficulty by speeding up enemies after every plane is destroyed
     private double enemySpeedMultiplier = 1.0;
+    // Time tracking for enemy shots
     private long lastEnemyShot = 0;
+    // The minimum interval, in miliseconds, between enemy shots
     private long enemyShotCooldown = 900;
     private Random random = new Random();
     
@@ -99,50 +102,55 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     private void startLevel(int level) {
         currentLevel = level;
         levelData = LevelData.LEVELS[level - 1];
+
+        // enemy fire rate per level. Only faster shooting for level 4
+        if (level == 4) {
+            enemyShotCooldown = 400;
+        } else {
+            enemyShotCooldown = (long)(900 / levelData.enemyBaseSpeed);
+        }
         
         // Reset lives at the start of each level
         lives = 2;
         
         // Initialize player
-    player = new Player(WIDTH/2 - 30, HEIGHT - 80, 60, 40, 3, 6,
-        levelData.playerSprite);
-    // set weapon mode per level: 1=AA,2=SAM,3=MiG,4=SAM
-    int weaponMode = 1;
-    if (level == 1) weaponMode = 1;
-    else if (level == 2) weaponMode = 2;
-    else if (level == 3) weaponMode = 3;
-    else if (level == 4) weaponMode = 2;
-    player.setWeaponMode(weaponMode);
-    // adjust shot cooldowns per weapon
-    if (weaponMode == 1) shotCooldown = 250;
-    else if (weaponMode == 2) shotCooldown = 500;
-    else if (weaponMode == 3) shotCooldown = 150;
-    // enemy fire rate per level
-    enemyShotCooldown = (long)(900 / levelData.enemyBaseSpeed);
+        player = new Player(WIDTH/2 - 30, HEIGHT - 80, 60, 40, 3, 6,
+            levelData.playerSprite);
+        // set weapon mode per level: 1=AA,2=SAM,3=MiG,4=SAM
+        int weaponMode = 1;
+        if (level == 1) weaponMode = 1;
+        else if (level == 2) weaponMode = 2;
+        else if (level == 3) weaponMode = 3;
+        else if (level == 4) weaponMode = 2;
+        player.setWeaponMode(weaponMode);
+        // adjust shot cooldowns per weapon
+        if (weaponMode == 1) shotCooldown = 250;
+        else if (weaponMode == 2) shotCooldown = 500;
+        else if (weaponMode == 3) shotCooldown = 150;
         
         // Clear and create enemies
         enemies.clear();
         playerBullets.clear();
         enemyBullets.clear();
         
-    // Prepare wave plan and compute total planes
-    wavePlan = LevelManager.wavesFor(levelData);
-    currentWaveIndex = 0;
-    nextWaveTime = System.currentTimeMillis();
-    enemies.clear();
-    // estimate total planes from waves
-    totalPlanes = 0;
-    for (LevelManager.Wave w : wavePlan) totalPlanes += w.count;
-    planesShot = 0;
+        // Prepare wave plan and compute total planes
+        wavePlan = LevelManager.wavesFor(levelData);
+        currentWaveIndex = 0;
+        nextWaveTime = System.currentTimeMillis();
+        enemies.clear();
+        // estimate total planes from waves
+        totalPlanes = 0;
+        for (LevelManager.Wave w : wavePlan) totalPlanes += w.count;
+        planesShot = 0;
         
         // Reset state
         enemySpeedMultiplier = 1.0;
         
         // Start level music
-    AssetManager.getInstance().playMusic(levelData.music, true);
+        AssetManager.getInstance().playMusic(levelData.music, true);
 
-    // Reset history panel so it will be created on paint for the intro
-    historyPanel = null;
+        // Reset history panel so it will be created on paint for the intro
+        historyPanel = null;
     }
     
     @Override
