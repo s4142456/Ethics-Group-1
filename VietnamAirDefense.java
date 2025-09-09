@@ -105,7 +105,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
 
         // enemy fire rate per level. Only faster shooting for level 4
         if (level == 4) {
-            enemyShotCooldown = 400;
+            enemyShotCooldown = 150;
         } else {
             enemyShotCooldown = (long)(900 / levelData.enemyBaseSpeed);
         }

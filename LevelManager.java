@@ -69,8 +69,8 @@ public class LevelManager {
             waves.add(new Wave(6, 3, 2, 3000));  // 2 rows for both aircraft types
             waves.add(new Wave(8, 4, 2, 4000));  // 2 rows for both aircraft types
         } else if (level.level == 4) {
-            waves.add(new Wave(10, 3, 2, 0));
-            waves.add(new Wave(10, 3, 2, 0));
+            waves.add(new Wave(14, 7, 2, 0));
+            waves.add(new Wave(14, 7, 2, 0));
         }
         return waves;
     }
