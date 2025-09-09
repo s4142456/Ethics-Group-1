@@ -12,6 +12,7 @@ public class LevelData {
     public final String historicalIntro;
     public final String historicalSummary;
     
+    // class for level data. Including enem health, enemy speed
     public LevelData(int level, String name, String description, String playerSprite,
                     String[] enemySprites, String background, String music, String weaponSound,
                     double enemyBaseSpeed, int[] enemyHealth, String historicalIntro,
@@ -82,8 +83,9 @@ public class LevelData {
             "bg_level4",
             "bgm_level4",
             "sam_launch",
-            0.8,
-            new int[]{5},
+            1.5,
+            // need to provide 2 health values for 2 enemy types
+            new int[]{10,10},
             "December 1972: The Christmas Bombing - B-52 bombers face intense SAM defenses over Hanoi in the largest bombing campaign of the war.",
             "Historical result: 15 B-52s shot down during 11 days of bombing. The heavy losses contributed to bringing the US back to peace negotiations."
         )
