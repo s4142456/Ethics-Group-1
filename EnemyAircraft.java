@@ -1,7 +1,7 @@
 import java.awt.*;
 import java.util.Random;
 
-enum MovementPattern { HORIZONTAL, SINE, ZIGZAG, RANDOM, DIVE, SWOOP }
+enum MovementPattern { HORIZONTAL, SINE, ZIGZAG, RANDOM, DIVE, SWOOP, FLANK }
 
 public class EnemyAircraft extends Aircraft {
     private double baseSpeed;
@@ -99,6 +99,23 @@ public class EnemyAircraft extends Aircraft {
                     // gently move back towards formation position
                     x += (formationX - x) * 0.02;
                     y += (formationY - y) * 0.02;
+                }
+            }
+            // Added a new movement pattern called FLANK
+            case FLANK -> {
+                // Example flanking logic
+                double flankOffset = 80;
+                boolean isLeftFlank = (formationX % 2 == 0); // or another way to assign left/right
+                double targetX = player != null ? player.getX() + (isLeftFlank ? -flankOffset : flankOffset) : x;
+                double targetY = player != null ? player.getY() : y;
+
+                // Move horizontally toward targetX
+                if (Math.abs(x - targetX) > 5) {
+                    x += Math.signum(targetX - x) * speed;
+                }
+                // Optionally, move vertically to match player
+                if (Math.abs(y - targetY) > 5) {
+                    y += Math.signum(targetY - y) * speed * 0.5;
                 }
             }
         }
