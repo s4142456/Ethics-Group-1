@@ -39,7 +39,7 @@ public class LevelManager {
                     pattern = (col % 3 == 0) ? MovementPattern.RANDOM : MovementPattern.ZIGZAG;
                 } else if (level.level == 4) {
                     // B-52s mostly slow with occasional dive (simulated)
-                    pattern = MovementPattern.DIVE;
+                    pattern = (row % 2 == 0) ? MovementPattern.DIVE : MovementPattern.FLANK;
                 }
                 list.add(new EnemyAircraft(x, y, enemyType, hp, level.enemyBaseSpeed, pattern));
             }
