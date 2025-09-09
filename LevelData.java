@@ -1,3 +1,4 @@
+// Change health of enemies in this file
 public class LevelData {
     public final int level;
     public final String name;
@@ -85,7 +86,7 @@ public class LevelData {
             "sam_launch",
             1.5,
             // need to provide 2 health values for 2 enemy types
-            new int[]{10,10},
+            new int[]{6,6},
             "December 1972: The Christmas Bombing - B-52 bombers face intense SAM defenses over Hanoi in the largest bombing campaign of the war.",
             "Historical result: 15 B-52s shot down during 11 days of bombing. The heavy losses contributed to bringing the US back to peace negotiations."
         )

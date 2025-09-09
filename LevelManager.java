@@ -1,3 +1,5 @@
+// Manages waves of enemies and enemies movement patterns based on level in this file
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,6 +41,7 @@ public class LevelManager {
                     pattern = (col % 3 == 0) ? MovementPattern.RANDOM : MovementPattern.ZIGZAG;
                 } else if (level.level == 4) {
                     // B-52s mostly slow with occasional dive (simulated)
+                    // Testing DIVE & FLANK for level 4
                     pattern = (row % 2 == 0) ? MovementPattern.DIVE : MovementPattern.FLANK;
                 }
                 list.add(new EnemyAircraft(x, y, enemyType, hp, level.enemyBaseSpeed, pattern));
@@ -69,7 +72,7 @@ public class LevelManager {
             waves.add(new Wave(6, 3, 2, 3000));  // 2 rows for both aircraft types
             waves.add(new Wave(8, 4, 2, 4000));  // 2 rows for both aircraft types
         } else if (level.level == 4) {
-            waves.add(new Wave(14, 7, 2, 0));
+            waves.add(new Wave(8, 7, 2, 0));
             waves.add(new Wave(14, 7, 2, 0));
         }
         return waves;

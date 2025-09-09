@@ -1,3 +1,5 @@
+// Create new pattern and edit pattern in this file
+
 import java.awt.*;
 import java.util.Random;
 
@@ -111,11 +113,11 @@ public class EnemyAircraft extends Aircraft {
 
                 // Move horizontally toward targetX
                 if (Math.abs(x - targetX) > 5) {
-                    x += Math.signum(targetX - x) * speed;
+                    x += Math.signum(targetX - x) * speed * 0.6;
                 }
-                // Optionally, move vertically to match player
+                // Vertical movement when FLANK
                 if (Math.abs(y - targetY) > 5) {
-                    y += Math.signum(targetY - y) * speed * 0.5;
+                    y += Math.signum(targetY - y) * speed * 0.1;
                 }
             }
         }
