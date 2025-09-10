@@ -3,7 +3,7 @@
 import java.awt.*;
 import java.util.Random;
 
-enum MovementPattern { HORIZONTAL, SINE, ZIGZAG, RANDOM, DIVE, SWOOP, FLANK, CIRCLE, WAVE }
+enum MovementPattern { HORIZONTAL, SINE, ZIGZAG, RANDOM, DIVE, SWOOP, FLANK, CIRCLE, WAVE, STALK, AMBUSH }
 
 public class EnemyAircraft extends Aircraft {
     private double baseSpeed;
@@ -132,6 +132,37 @@ public class EnemyAircraft extends Aircraft {
                 t += 0.05;
                 x += speed;
                 y = formationY + Math.sin(t * 2) * 40;
+            }
+            case STALK -> {
+                if (player != null) {
+                    if (Math.abs(x - player.getX()) > 5) {
+                        x += Math.signum(player.getX() - x) * speed * 0.7;
+                    }
+                }
+                // y stays near formationY
+                if (Math.abs(y - formationY) > 2) {
+                    y += Math.signum(formationY - y) * speed * 0.5;
+                }
+            }
+            case AMBUSH -> {
+                if (player != null) {
+                    // Move towards player if within certain range
+                    double distX = player.getX() - x;
+                    double distY = player.getY() - y;
+                    double distance = Math.sqrt(distX * distX + distY * distY);
+                    if (distance < 200) {
+                        x += (distX / distance) * speed * 1.2;
+                        y += (distY / distance) * speed * 1.2;
+                    } else {
+                        // Return to formation position
+                        if (Math.abs(x - formationX) > 5) {
+                            x += Math.signum(formationX - x) * speed * 0.5;
+                        }
+                        if (Math.abs(y - formationY) > 5) {
+                            y += Math.signum(formationY - y) * speed * 0.5;
+                        }
+                    }
+                }
             }
         }
         // clamp to screen bounds so enemies don't leave visible area
