@@ -3,7 +3,7 @@
 import java.awt.*;
 import java.util.Random;
 
-enum MovementPattern { HORIZONTAL, SINE, ZIGZAG, RANDOM, DIVE, SWOOP, FLANK }
+enum MovementPattern { HORIZONTAL, SINE, ZIGZAG, RANDOM, DIVE, SWOOP, FLANK, CIRCLE, WAVE }
 
 public class EnemyAircraft extends Aircraft {
     private double baseSpeed;
@@ -119,6 +119,19 @@ public class EnemyAircraft extends Aircraft {
                 if (Math.abs(y - targetY) > 5) {
                     y += Math.signum(targetY - y) * speed * 0.1;
                 }
+            }
+            case CIRCLE -> {
+                double radius = 60;
+                double centerX = formationX;
+                double centerY = formationY;
+                t += 0.03;
+                x = centerX + Math.cos(t) * radius;
+                y = centerY + Math.sin(t) * radius;
+            }
+            case WAVE -> {
+                t += 0.05;
+                x += speed;
+                y = formationY + Math.sin(t * 2) * 40;
             }
         }
         // clamp to screen bounds so enemies don't leave visible area
