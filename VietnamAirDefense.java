@@ -288,16 +288,19 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                     enemy.damage(bullet.getDamage());
                     itB.remove();
                     
+                    // Xác định màu vụ nổ dựa trên loại máy bay
+                    Color explosionColor = getExplosionColorForAircraft(enemy.getSpriteKey());
+                    
                     if (enemy.isDestroyed()) {
                         itE.remove();
                         score += 100;
                         planesShot++;
-                        explosions.add(new Explosion(enemy.getX() + enemy.getWidth()/2, enemy.getY() + enemy.getHeight()/2));
+                        explosions.add(new Explosion(enemy.getX() + enemy.getWidth()/2, enemy.getY() + enemy.getHeight()/2, explosionColor));
                         // Speed up remaining enemies
                         enemySpeedMultiplier += 0.08;
                         enemies.forEach(e -> e.increaseSpeed(enemySpeedMultiplier));
                     } else {
-                        explosions.add(new Explosion(enemy.getX() + enemy.getWidth()/2, enemy.getY() + enemy.getHeight()/2));
+                        explosions.add(new Explosion(enemy.getX() + enemy.getWidth()/2, enemy.getY() + enemy.getHeight()/2, explosionColor));
                     }
                     break;
                 }
@@ -311,7 +314,8 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (bullet.getBounds().intersects(player.getBounds())) {
         itEB.remove();
         lives -= bullet.getDamage();
-                explosions.add(new Explosion(player.getX() + player.getWidth()/2, player.getY() + player.getHeight()/2));
+                // Vụ nổ của player sử dụng màu xanh dương
+                explosions.add(new Explosion(player.getX() + player.getWidth()/2, player.getY() + player.getHeight()/2, new Color(100, 150, 255)));
                 if (lives <= 0) {
                     gameOver(false);
                 }
@@ -319,6 +323,40 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     // Update explosion animations
     updateExplosions();
+    }
+    
+    // Phương thức mới để xác định màu vụ nổ cho từng loại máy bay
+    private Color getExplosionColorForAircraft(String aircraftType) {
+        switch (aircraftType) {
+            // Level 1 - Máy bay Pháp
+            case "morane":
+                return new Color(255, 100, 100); // Đỏ sáng - máy bay chiến đấu nhẹ
+            case "spitfire":
+                return new Color(255, 150, 50); // Cam đỏ - máy bay chiến đấu nổi tiếng
+            case "bearcat":
+                return new Color(255, 200, 0); // Vàng - máy bay mạnh mẽ
+            case "dakota":
+                return new Color(150, 150, 255); // Xanh tím - máy bay vận tải
+                
+            // Level 2 - Máy bay Mỹ thời kỳ đầu
+            case "f105":
+                return new Color(255, 80, 80); // Đỏ đậm - máy bay ném bom chiến thuật
+            case "f4phantom":
+                return new Color(200, 100, 255); // Tím - máy bay đa nhiệm
+            case "b26":
+                return new Color(255, 165, 0); // Cam - máy bay ném bom trung bình
+                
+            // Level 3 - Không chiến
+            case "skyhawk":
+                return new Color(0, 255, 150); // Xanh lá sáng - máy bay tấn công nhẹ
+                
+            // Level 4 - Máy bay lớn
+            case "b52":
+                return new Color(255, 50, 50); // Đỏ rực - máy bay ném bom chiến lược khổng lồ
+                
+            default:
+                return new Color(255, 180, 60); // Màu mặc định (cam/vàng cũ)
+        }
     }
 
     private void updateExplosions() {

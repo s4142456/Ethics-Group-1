@@ -202,6 +202,11 @@ public class EnemyAircraft extends Aircraft {
     public void increaseSpeed(double amount) {
         speed = baseSpeed * (1 + amount);
     }
+    
+    // Getter cho spriteKey để xác định loại máy bay
+    public String getSpriteKey() {
+        return spriteKey;
+    }
 
     @Override
     public void draw(Graphics2D g2) {
