@@ -3,7 +3,7 @@
 import java.awt.*;
 import java.util.Random;
 
-enum MovementPattern { HORIZONTAL, SINE, ZIGZAG, RANDOM, DIVE, SWOOP, FLANK, CIRCLE, WAVE, STALK, AMBUSH, SNAKE_DOWN }
+enum MovementPattern { HORIZONTAL, SINE, ZIGZAG, RANDOM, DIVE, SWOOP, FLANK, CIRCLE, WAVE, STALK, AMBUSH, SNAKE_DOWN_RIGHT, SNAKE_DOWN_LEFT }
 
 public class EnemyAircraft extends Aircraft {
     private double baseSpeed;
@@ -167,17 +167,28 @@ public class EnemyAircraft extends Aircraft {
                     }
                 }
             }
-            case SNAKE_DOWN -> {
+            case SNAKE_DOWN_RIGHT -> {
                 // Move horizontally
                 x += moveDir * speed * 0.7;
                 // Move downward slowly
-                y += speed * 0.15;
+                y += speed * 0.2;
                 // Change direction and move down more when hitting borders
                 if (x <= 20 || x + w >= screenWidth - 20) {
                     moveDir *= -1;
                     y += 18; // Drop down a bit more when changing direction
                 }
-}
+            }
+            case SNAKE_DOWN_LEFT -> {
+                // Move horizontally
+                x += moveDir * speed * 0.7 * -1;
+                // Move downward slowly
+                y += speed * 0.2;
+                // Change direction and move down more when hitting borders
+                if (x <= 20 || x + w >= screenWidth - 20) {
+                    moveDir *= -1;
+                    y += 18; // Drop down a bit more when changing direction
+                }
+            }
         }
         // clamp to screen bounds so enemies don't leave visible area
         x = Math.max(10, Math.min(screenWidth - w - 10, x));

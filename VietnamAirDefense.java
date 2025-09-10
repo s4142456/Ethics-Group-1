@@ -1,3 +1,5 @@
+// Change enemies' shooting speed in this file
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -106,8 +108,10 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         // enemy fire rate per level. Only faster shooting for level 4
         if (level == 4) {
             enemyShotCooldown = 150;
+        } else if (level == 3){
+            enemyShotCooldown = 250;
         } else {
-            enemyShotCooldown = (long)(900 / levelData.enemyBaseSpeed);
+           enemyShotCooldown = (long)(900 / levelData.enemyBaseSpeed); 
         }
         
         // Reset lives at the start of each level
