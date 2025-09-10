@@ -3,7 +3,7 @@
 import java.awt.*;
 import java.util.Random;
 
-enum MovementPattern { HORIZONTAL, SINE, ZIGZAG, RANDOM, DIVE, SWOOP, FLANK, CIRCLE, WAVE, STALK, AMBUSH }
+enum MovementPattern { HORIZONTAL, SINE, ZIGZAG, RANDOM, DIVE, SWOOP, FLANK, CIRCLE, WAVE, STALK, AMBUSH, SNAKE_DOWN }
 
 public class EnemyAircraft extends Aircraft {
     private double baseSpeed;
@@ -120,11 +120,13 @@ public class EnemyAircraft extends Aircraft {
                     y += Math.signum(targetY - y) * speed * 0.1;
                 }
             }
+            // Move in circle
             case CIRCLE -> {
-                double radius = 60;
+                double radius = 70;
                 double centerX = formationX;
                 double centerY = formationY;
-                t += 0.03;
+                // control speed of movement
+                t += 0.02;
                 x = centerX + Math.cos(t) * radius;
                 y = centerY + Math.sin(t) * radius;
             }
@@ -144,6 +146,7 @@ public class EnemyAircraft extends Aircraft {
                     y += Math.signum(formationY - y) * speed * 0.5;
                 }
             }
+            // AMBUSH IS SUPPOSED TO FOLLOW THE PLAYER SUDDENLY, BUT IN PRACTICE IT LOOKS BAD
             case AMBUSH -> {
                 if (player != null) {
                     // Move towards player if within certain range
@@ -164,6 +167,17 @@ public class EnemyAircraft extends Aircraft {
                     }
                 }
             }
+            case SNAKE_DOWN -> {
+                // Move horizontally
+                x += moveDir * speed * 0.7;
+                // Move downward slowly
+                y += speed * 0.15;
+                // Change direction and move down more when hitting borders
+                if (x <= 20 || x + w >= screenWidth - 20) {
+                    moveDir *= -1;
+                    y += 18; // Drop down a bit more when changing direction
+                }
+}
         }
         // clamp to screen bounds so enemies don't leave visible area
         x = Math.max(10, Math.min(screenWidth - w - 10, x));

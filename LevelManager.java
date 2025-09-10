@@ -33,7 +33,8 @@ public class LevelManager {
                 MovementPattern pattern = MovementPattern.HORIZONTAL;
                 if (level.level == 1) {
                     // simpler for level 1
-                    pattern = MovementPattern.HORIZONTAL;
+                    pattern = MovementPattern.CIRCLE;
+                    //pattern = MovementPattern.HORIZONTAL;
                 } else if (level.level == 2) {
                     pattern = (row % 2 == 0) ? MovementPattern.SINE : MovementPattern.ZIGZAG;
                 } else if (level.level == 3) {
@@ -41,8 +42,8 @@ public class LevelManager {
                     pattern = (col % 3 == 0) ? MovementPattern.RANDOM : MovementPattern.ZIGZAG;
                 } else if (level.level == 4) {
                     // B-52s mostly slow with occasional dive (simulated)
-                    // Testing DIVE & FLANK for level 4
-                    pattern = (row % 2 == 0) ? MovementPattern.DIVE : MovementPattern.FLANK;
+                    // Testing DIVE & CIRCLE for level 4
+                    pattern = (row % 2 == 0) ? MovementPattern.DIVE : MovementPattern.CIRCLE;
                 }
                 list.add(new EnemyAircraft(x, y, enemyType, hp, level.enemyBaseSpeed, pattern));
             }
@@ -52,17 +53,20 @@ public class LevelManager {
 
     // This is where we specified the number of enemies in a stage
     // count = number of enemies
-    // cols = number of columns in the enemy waves formation
+    // cols = number of columns in the enemy waves formation. Every column seems to be a differnt type of enemy
     // delayMs = time delay (in miliseconds) between waves
     public static List<Wave> wavesFor(LevelData level) {
         List<Wave> waves = new ArrayList<>();
         if (level.level == 1) {
+            
+            // Test pattern with 1 wave, using level 1
+            waves.add(new Wave(8, 4, 2, 0));
             // Wave 1: First two types of aircraft
-            waves.add(new Wave(6, 6, 2, 0));
+            //waves.add(new Wave(6, 6, 2, 0));
             // Wave 2: Next two types of aircraft
-            waves.add(new Wave(6, 6, 2, 5000));
+            //waves.add(new Wave(6, 6, 2, 5000));
             // Wave 3: All four types mixed
-            waves.add(new Wave(8, 8, 4, 7000));
+            //waves.add(new Wave(8, 8, 4, 7000));
         } else if (level.level == 2) {
             waves.add(new Wave(6, 2, 3, 0));     // 3 rows for all aircraft types
             waves.add(new Wave(9, 3, 3, 4000));  // 3 rows for all aircraft types
@@ -72,8 +76,8 @@ public class LevelManager {
             waves.add(new Wave(6, 3, 2, 3000));  // 2 rows for both aircraft types
             waves.add(new Wave(8, 4, 2, 4000));  // 2 rows for both aircraft types
         } else if (level.level == 4) {
-            waves.add(new Wave(8, 7, 2, 0));
-            waves.add(new Wave(14, 7, 2, 0));
+            waves.add(new Wave(15, 5, 3, 0));
+            //waves.add(new Wave(14, 7, 2, 0));
         }
         return waves;
     }
