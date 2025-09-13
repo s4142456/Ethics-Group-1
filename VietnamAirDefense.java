@@ -62,6 +62,8 @@ public class VietnamAirDefense extends JFrame {
 }
 
 class GamePanel extends JPanel implements ActionListener, KeyListener {
+    // Store previous state for returning from instructions
+    private GameState prevState = null;
     // Draw the next level screen overlay
     private void drawNextLevelScreen(Graphics2D g2) {
         g2.setColor(new Color(0, 0, 0, 220));
@@ -734,13 +736,27 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 }
             }
             case KeyEvent.VK_I -> {
-                if (state == GameState.MENU) {
+                if (state == GameState.MENU || state == GameState.PLAYING || state == GameState.PAUSED) {
+                    prevState = state;
                     state = GameState.INSTRUCTIONS;
+                    if (prevState == GameState.PAUSED) {
+                        hideVolumeSlider();
+                    } else if (prevState == GameState.PLAYING && timer != null) {
+                        timer.stop();
+                    }
+                    repaint(); // Ensure instructions are drawn immediately
                 }
             }
             case KeyEvent.VK_ESCAPE -> {
                 if (state == GameState.INSTRUCTIONS) {
-                    state = GameState.MENU;
+                    if (prevState == GameState.PLAYING && timer != null) {
+                        timer.start();
+                    } else if (prevState == GameState.PAUSED) {
+                        setupVolumeSlider();
+                    }
+                    state = (prevState != null) ? prevState : GameState.MENU;
+                    prevState = null;
+                    repaint(); // Ensure game or pause overlay is redrawn
                 }
             }
             case KeyEvent.VK_SPACE -> {
