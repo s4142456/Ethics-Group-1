@@ -1,12 +1,26 @@
 // Change enemies' shooting speed in this file
 
-import java.awt.*;
-import java.awt.event.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.Image;
+import java.awt.Rectangle;
+import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
-import javax.swing.*;
+import javax.swing.JFrame;
+import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
+
 
 public class VietnamAirDefense extends JFrame {
     private static final String GAME_TITLE = "Vietnam Air Defense (1946-1972)";
@@ -159,6 +173,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     
     @Override
     public void actionPerformed(ActionEvent e) {
+        // Do not update game logic if paused, but still repaint to show pause overlay
         if (state == GameState.PLAYING) {
             updateGame();
         }
@@ -419,11 +434,29 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 pg.dispose();
             }
             case PLAYING -> drawGame(g2);
+            case PAUSED -> {
+                drawGame(g2);
+                drawPauseOverlay(g2);
+            }
             case GAME_OVER -> drawGameOver(g2);
             case VICTORY -> drawVictory(g2);
         }
         
         g2.dispose();
+    }
+
+    private void drawPauseOverlay(Graphics2D g2) {
+        g2.setColor(new Color(0, 0, 0, 160));
+        g2.fillRect(0, 0, WIDTH, HEIGHT);
+        g2.setColor(Color.YELLOW);
+        g2.setFont(new Font("Arial", Font.BOLD, 48));
+        String text = "PAUSED";
+        int x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
+        g2.drawString(text, x, HEIGHT/2);
+        g2.setFont(new Font("Arial", Font.PLAIN, 24));
+        String resume = "Press P to Resume";
+        int rx = (WIDTH - g2.getFontMetrics().stringWidth(resume)) / 2;
+        g2.drawString(resume, rx, HEIGHT/2 + 50);
     }
     
     private void drawInstructions(Graphics2D g2) {
@@ -593,6 +626,15 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             case KeyEvent.VK_RIGHT -> rightPressed = true;
             case KeyEvent.VK_UP -> upPressed = true;
             case KeyEvent.VK_DOWN -> downPressed = true;
+            case KeyEvent.VK_P -> {
+                if (state == GameState.PLAYING) {
+                    state = GameState.PAUSED;
+                    if (timer != null) timer.stop();
+                } else if (state == GameState.PAUSED) {
+                    state = GameState.PLAYING;
+                    if (timer != null) timer.start();
+                }
+            }
             case KeyEvent.VK_I -> {
                 if (state == GameState.MENU) {
                     state = GameState.INSTRUCTIONS;
@@ -643,6 +685,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             case KeyEvent.VK_UP -> upPressed = false;
             case KeyEvent.VK_DOWN -> downPressed = false;
             case KeyEvent.VK_SPACE -> spacePressed = false;
+            // No action needed for P on release
         }
     }
     
