@@ -728,11 +728,13 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 if (state == GameState.PLAYING) {
                     state = GameState.PAUSED;
                     if (timer != null) timer.stop();
+                    repaint(); // Show pause overlay immediately
                     setupVolumeSlider();
                 } else if (state == GameState.PAUSED) {
                     state = GameState.PLAYING;
                     if (timer != null) timer.start();
                     hideVolumeSlider();
+                    repaint(); // Remove pause overlay immediately
                 }
             }
             case KeyEvent.VK_I -> {
