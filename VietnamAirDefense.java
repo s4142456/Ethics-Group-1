@@ -1,3 +1,6 @@
+import javax.swing.JSlider;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 // Change enemies' shooting speed in this file
 
 import java.awt.Color;
@@ -59,6 +62,30 @@ public class VietnamAirDefense extends JFrame {
 }
 
 class GamePanel extends JPanel implements ActionListener, KeyListener {
+    // Volume control for bullet sounds
+    private float bulletVolume = 1.0f; // 0.0 (mute) to 1.0 (max)
+    private JSlider volumeSlider;
+    private void setupVolumeSlider() {
+        if (volumeSlider == null) {
+            volumeSlider = new JSlider(0, 100, (int)(bulletVolume * 100));
+            volumeSlider.setBounds(WIDTH/2 - 100, HEIGHT/2 + 30, 200, 40);
+            volumeSlider.addChangeListener(new ChangeListener() {
+                @Override
+                public void stateChanged(ChangeEvent e) {
+                    bulletVolume = volumeSlider.getValue() / 100f;
+                }
+            });
+            volumeSlider.setFocusable(false);
+        }
+        add(volumeSlider);
+        volumeSlider.setVisible(true);
+    }
+
+    private void hideVolumeSlider() {
+        if (volumeSlider != null) {
+            volumeSlider.setVisible(false);
+        }
+    }
     // Screen dimensions
     static final int WIDTH = 800;
     static final int HEIGHT = 600;
@@ -211,7 +238,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     // Player shooting
         long now = System.currentTimeMillis();
         if (spacePressed && now - lastShotTime > shotCooldown) {
-            playerBullets.add(player.shoot(levelData.weaponSound));
+            playerBullets.add(player.shoot(levelData.weaponSound, bulletVolume));
             lastShotTime = now;
         }
         
@@ -250,7 +277,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (random.nextDouble() < 0.3) {
                 double bulletX = shooter.getX() + shooter.getWidth()/2 - 2;
                 double bulletY = shooter.getY() + shooter.getHeight();
-                enemyBullets.add(new Bullet(bulletX, bulletY, 5.0, false, "mig_shoot"));
+                enemyBullets.add(new Bullet(bulletX, bulletY, 5.0, false, "mig_shoot", bulletVolume));
             }
             lastEnemyShot = now;
         }
@@ -446,17 +473,47 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
 
     private void drawPauseOverlay(Graphics2D g2) {
-        g2.setColor(new Color(0, 0, 0, 160));
+        // Draw semi-transparent background
+        g2.setColor(new Color(0, 0, 0, 200));
         g2.fillRect(0, 0, WIDTH, HEIGHT);
+
+        // Draw pause menu box
+        int menuWidth = 340;
+        int menuHeight = 260;
+        int menuX = (WIDTH - menuWidth) / 2;
+        int menuY = (HEIGHT - menuHeight) / 2;
+        g2.setColor(new Color(40, 40, 40, 240));
+        g2.fillRoundRect(menuX, menuY, menuWidth, menuHeight, 30, 30);
+
+        // Draw "Paused" title
         g2.setColor(Color.YELLOW);
-        g2.setFont(new Font("Arial", Font.BOLD, 48));
-        String text = "PAUSED";
-        int x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
-        g2.drawString(text, x, HEIGHT/2);
-        g2.setFont(new Font("Arial", Font.PLAIN, 24));
-        String resume = "Press P to Resume";
-        int rx = (WIDTH - g2.getFontMetrics().stringWidth(resume)) / 2;
-        g2.drawString(resume, rx, HEIGHT/2 + 50);
+        g2.setFont(new Font("Arial", Font.BOLD, 36));
+        String title = "Paused";
+        int titleX = (WIDTH - g2.getFontMetrics().stringWidth(title)) / 2;
+        g2.drawString(title, titleX, menuY + 55);
+
+        // Draw "Press P to resume" message
+        g2.setFont(new Font("Arial", Font.PLAIN, 22));
+        g2.setColor(Color.WHITE);
+        String resumeMsg = "Press P to resume";
+        int resumeX = (WIDTH - g2.getFontMetrics().stringWidth(resumeMsg)) / 2;
+        g2.drawString(resumeMsg, resumeX, menuY + 95);
+
+        // Draw "Adjust volume" label
+        g2.setFont(new Font("Arial", Font.PLAIN, 20));
+        String adjustLabel = "Adjust volume:";
+        int adjustX = (WIDTH - g2.getFontMetrics().stringWidth(adjustLabel)) / 2;
+        g2.drawString(adjustLabel, adjustX, menuY + 135);
+
+        // Draw "Bullet Volume:" label above slider
+        String volLabel = "Bullet Volume:";
+        int volx = (WIDTH - g2.getFontMetrics().stringWidth(volLabel)) / 2;
+        g2.drawString(volLabel, volx, menuY + 170);
+
+        // Position and show the volume slider below the label
+        if (volumeSlider == null) setupVolumeSlider();
+        volumeSlider.setBounds(WIDTH/2 - 100, menuY + 185, 200, 40);
+        setupVolumeSlider();
     }
     
     private void drawInstructions(Graphics2D g2) {
@@ -630,9 +687,11 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 if (state == GameState.PLAYING) {
                     state = GameState.PAUSED;
                     if (timer != null) timer.stop();
+                    setupVolumeSlider();
                 } else if (state == GameState.PAUSED) {
                     state = GameState.PLAYING;
                     if (timer != null) timer.start();
+                    hideVolumeSlider();
                 }
             }
             case KeyEvent.VK_I -> {

@@ -1,10 +1,10 @@
-import javax.imageio.ImageIO;
-import javax.sound.sampled.*;
 import java.awt.Image;
 import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import javax.imageio.ImageIO;
+import javax.sound.sampled.*;
 
 public class AssetManager {
     private static AssetManager instance;
@@ -111,6 +111,10 @@ public class AssetManager {
     }
     
     public void playSound(String key) {
+        playSound(key, 1.0f);
+    }
+
+    public void playSound(String key, float volume) {
         try {
             // Try WAV sounds first
             Clip clip = wavSounds.get(key);
@@ -119,10 +123,20 @@ public class AssetManager {
                     clip.stop();
                 }
                 clip.setFramePosition(0);
+                // Set volume if supported
+                FloatControl gainControl = null;
+                try {
+                    gainControl = (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+                } catch (Exception ignored) {}
+                if (gainControl != null) {
+                    float min = gainControl.getMinimum();
+                    float max = gainControl.getMaximum();
+                    float gain = min + (max - min) * volume;
+                    gainControl.setValue(gain);
+                }
                 clip.start();
                 return;
             }
-            
             // Only WAV sounds supported in this build.
         } catch (Exception e) {
             System.err.println("Warning: Could not play sound: " + key);

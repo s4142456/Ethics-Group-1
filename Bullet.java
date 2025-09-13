@@ -14,7 +14,7 @@ public class Bullet {
     protected Color color = Color.WHITE;
     protected boolean isGuided = false;
     
-    public Bullet(double x, double y, double velocityY, boolean isPlayerBullet, String soundEffect) {
+    public Bullet(double x, double y, double velocityY, boolean isPlayerBullet, String soundEffect, float volume) {
         this.x = x;
         this.y = y;
         this.speed = Math.abs(velocityY);
@@ -23,20 +23,19 @@ public class Bullet {
         this.velocityY = velocityY;
         this.isPlayerBullet = isPlayerBullet;
         this.soundEffect = soundEffect;
-        
-        // Play sound effect when bullet is created
-        AssetManager.getInstance().playSound(soundEffect);
+        // Play sound effect when bullet is created, with volume
+        AssetManager.getInstance().playSound(soundEffect, volume);
     }
 
-    public Bullet(double x, double y, double velocityY, boolean isPlayerBullet, String soundEffect, int width, int height, int damage, Color color) {
-        this(x, y, velocityY, isPlayerBullet, soundEffect);
+    public Bullet(double x, double y, double velocityY, boolean isPlayerBullet, String soundEffect, int width, int height, int damage, Color color, float volume) {
+        this(x, y, velocityY, isPlayerBullet, soundEffect, volume);
         this.width = width;
         this.height = height;
         this.damage = damage;
         this.color = color;
     }
 
-    public Bullet(double x, double y, double speed, boolean isPlayerBullet, String soundEffect, int width, int height, int damage, Color color, double angle) {
+    public Bullet(double x, double y, double speed, boolean isPlayerBullet, String soundEffect, int width, int height, int damage, Color color, double angle, float volume) {
         this.x = x;
         this.y = y;
         this.speed = speed;
@@ -50,8 +49,7 @@ public class Bullet {
         this.damage = damage;
         this.color = color;
         this.isGuided = true;
-        
-        AssetManager.getInstance().playSound(soundEffect);
+        AssetManager.getInstance().playSound(soundEffect, volume);
     }
     
     public void update() {
