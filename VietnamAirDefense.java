@@ -272,9 +272,9 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
     
     public void start() {
-        timer = new Timer(1000 / FPS, this);
-        timer.start();
-        AssetManager.getInstance().playMusic("bgm_menu", true);
+    timer = new Timer(1000 / FPS, this);
+    timer.start();
+    AssetManager.getInstance().playMusic("bgm_menu", true);
     }
     
     private void startLevel(int level) {
@@ -327,8 +327,9 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     // Reset state
         enemySpeedMultiplier = 1.0;
         
-    // Start level music
-        AssetManager.getInstance().playMusic(levelData.music, true);
+    // Start level music (force WAV key)
+        String musicKey = levelData.music.endsWith(".wav") ? levelData.music.replace(".wav", "") : levelData.music;
+        AssetManager.getInstance().playMusic(musicKey, true);
 
     // Reset history panel so it will be created on paint for the intro
         historyPanel = null;
@@ -546,9 +547,13 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
     
     private void gameOver(boolean won) {
-        state = won ? GameState.VICTORY : GameState.GAME_OVER;
-        AssetManager.getInstance().stopAllMusic();
-        AssetManager.getInstance().playSound(won ? "victory" : "gameover");
+    state = won ? GameState.VICTORY : GameState.GAME_OVER;
+    AssetManager.getInstance().stopMusic();
+        if (won) {
+            AssetManager.getInstance().playSound("victory");
+        } else {
+            AssetManager.getInstance().playSoundInSequence("gameover1", "gameover2");
+        }
     }
     
     private void victory() {
@@ -557,7 +562,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             showNextLevelScreen = true;
             nextLevelToStart = currentLevel + 1;
             if (timer != null) timer.stop();
-            AssetManager.getInstance().stopAllMusic();
+            AssetManager.getInstance().stopMusic();
             AssetManager.getInstance().playSound("victory");
             repaint();
         } else {
