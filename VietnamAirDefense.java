@@ -1,12 +1,12 @@
 // Change enemies' shooting speed in this file
 
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import javax.swing.*;
 
 public class VietnamAirDefense extends JFrame {
     private static final String GAME_TITLE = "Vietnam Air Defense (1946-1972)";
@@ -80,7 +80,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     private double enemySpeedMultiplier = 1.0;
     // Time tracking for enemy shots
     private long lastEnemyShot = 0;
-    // The minimum interval, in miliseconds, between enemy shots
+    // The minimum interval, in milliseconds, between enemy shots
     private long enemyShotCooldown = 900;
     private Random random = new Random();
     
@@ -105,7 +105,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         currentLevel = level;
         levelData = LevelData.LEVELS[level - 1];
 
-        // enemy fire rate per level. Only faster shooting for level 4
+    // Enemy fire rate per level. Only faster shooting for level 4
         if (level == 4) {
             enemyShotCooldown = 150;
         } else if (level == 3){
@@ -114,46 +114,46 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
            enemyShotCooldown = (long)(900 / levelData.enemyBaseSpeed); 
         }
         
-        // Reset lives at the start of each level
+    // Reset lives at the start of each level
         lives = 2;
         
         // Initialize player
         player = new Player(WIDTH/2 - 30, HEIGHT - 80, 60, 40, 3, 6,
             levelData.playerSprite);
-        // set weapon mode per level: 1=AA,2=SAM,3=MiG,4=SAM
+    // Set weapon mode per level: 1=AA,2=SAM,3=MiG,4=SAM
         int weaponMode = 1;
         if (level == 1) weaponMode = 1;
         else if (level == 2) weaponMode = 2;
         else if (level == 3) weaponMode = 3;
         else if (level == 4) weaponMode = 2;
         player.setWeaponMode(weaponMode);
-        // adjust shot cooldowns per weapon
+    // Adjust shot cooldowns per weapon
         if (weaponMode == 1) shotCooldown = 250;
         else if (weaponMode == 2) shotCooldown = 500;
         else if (weaponMode == 3) shotCooldown = 150;
         
-        // Clear and create enemies
+    // Clear and create enemies
         enemies.clear();
         playerBullets.clear();
         enemyBullets.clear();
         
-        // Prepare wave plan and compute total planes
+    // Prepare wave plan and compute total planes
         wavePlan = LevelManager.wavesFor(levelData);
         currentWaveIndex = 0;
         nextWaveTime = System.currentTimeMillis();
         enemies.clear();
-        // estimate total planes from waves
+    // Estimate total planes from waves
         totalPlanes = 0;
         for (LevelManager.Wave w : wavePlan) totalPlanes += w.count;
         planesShot = 0;
         
-        // Reset state
+    // Reset state
         enemySpeedMultiplier = 1.0;
         
-        // Start level music
+    // Start level music
         AssetManager.getInstance().playMusic(levelData.music, true);
 
-        // Reset history panel so it will be created on paint for the intro
+    // Reset history panel so it will be created on paint for the intro
         historyPanel = null;
     }
     
@@ -166,49 +166,49 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
     
     private void updateGame() {
-        // Player movement
+    // Player movement
         double dx = 0, dy = 0;
         if (currentLevel == 3) {
-            // free two-axis movement in level 3
+            // Free two-axis movement in level 3
             if (leftPressed) dx -= player.getSpeed();
             if (rightPressed) dx += player.getSpeed();
             if (upPressed) dy -= player.getSpeed();
             if (downPressed) dy += player.getSpeed();
         } else {
-            // only horizontal movement elsewhere
+            // Only horizontal movement elsewhere
             if (leftPressed) dx -= player.getSpeed();
             if (rightPressed) dx += player.getSpeed();
         }
-        // normalize diagonal speed to avoid faster diagonal movement
+    // Normalize diagonal speed to avoid faster diagonal movement
         if (dx != 0 && dy != 0) {
             double inv = 1.0 / Math.sqrt(2);
             dx *= inv; dy *= inv;
         }
         player.move(dx, dy);
 
-        // Keep player in bounds
+    // Keep player in bounds
         double px = player.getX();
         px = Math.max(10, Math.min(WIDTH - player.getWidth() - 10, px));
         double py = player.getY();
         py = Math.max(10, Math.min(HEIGHT - player.getHeight() - 10, py));
         player.move(px - player.getX(), py - player.getY());
         
-        // Player shooting
+    // Player shooting
         long now = System.currentTimeMillis();
         if (spacePressed && now - lastShotTime > shotCooldown) {
             playerBullets.add(player.shoot(levelData.weaponSound));
             lastShotTime = now;
         }
         
-        // If there are no active enemies but waves remain, spawn next wave immediately
+    // If there are no active enemies but waves remain, spawn next wave immediately
         if (wavePlan != null && currentWaveIndex < wavePlan.size() && enemies.isEmpty()) {
             nextWaveTime = System.currentTimeMillis();
         }
 
-        // Spawn waves if needed
+    // Spawn waves if needed
         if (wavePlan != null && currentWaveIndex < wavePlan.size() && System.currentTimeMillis() >= nextWaveTime) {
             LevelManager.Wave w = wavePlan.get(currentWaveIndex);
-            // create w.count enemies spread across the top area
+            // Create w.count enemies spread across the top area
             int cols = Math.max(1, Math.min(12, w.cols));
             int rows = Math.max(1, w.rows);
             int startX = 60 + (random.nextInt(40));
@@ -219,7 +219,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             nextWaveTime = System.currentTimeMillis() + w.delayMs;
         }
 
-        // Update enemies
+    // Update enemies
         for (EnemyAircraft enemy : enemies) {
             enemy.updateFormation(WIDTH, HEIGHT, player);
             if (enemy.reachedBottom(HEIGHT) || enemy.getBounds().intersects(player.getBounds())) {
@@ -229,7 +229,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     // (MiG vertical movement handled earlier with normalized dx/dy)
         
-        // Enemy shooting
+    // Enemy shooting
         if (now - lastEnemyShot > enemyShotCooldown && !enemies.isEmpty()) {
             EnemyAircraft shooter = enemies.get(random.nextInt(enemies.size()));
             if (random.nextDouble() < 0.3) {
@@ -240,20 +240,20 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             lastEnemyShot = now;
         }
         
-        // Update bullets
+    // Update bullets
         updateBullets();
         
-        // Check collisions
+    // Check collisions
         checkCollisions();
         
-        // Check win condition: only when all waves spawned and no enemies remain
+    // Check win condition: only when all waves spawned and no enemies remain
         if (enemies.isEmpty() && (wavePlan == null || currentWaveIndex >= wavePlan.size())) {
             victory();
         }
     }
     
     private void updateBullets() {
-        // Update player bullets
+    // Update player bullets
         Iterator<Bullet> it = playerBullets.iterator();
         while (it.hasNext()) {
             Bullet bullet = it.next();
@@ -263,7 +263,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
         
-        // Update enemy bullets
+    // Update enemy bullets
         it = enemyBullets.iterator();
         while (it.hasNext()) {
             Bullet bullet = it.next();
@@ -275,7 +275,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
     
     private void checkCollisions() {
-        // Check player bullets vs enemies
+    // Check player bullets vs enemies
         Iterator<Bullet> itB = playerBullets.iterator();
         while (itB.hasNext()) {
             Bullet bullet = itB.next();
@@ -288,7 +288,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                     enemy.damage(bullet.getDamage());
                     itB.remove();
                     
-                    // Xác định màu vụ nổ dựa trên loại máy bay
+                    // Determine explosion color based on aircraft type
                     Color explosionColor = getExplosionColorForAircraft(enemy.getSpriteKey());
                     
                     if (enemy.isDestroyed()) {
@@ -314,7 +314,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             if (bullet.getBounds().intersects(player.getBounds())) {
         itEB.remove();
         lives -= bullet.getDamage();
-                // Vụ nổ của player sử dụng màu xanh dương
+                // Player's explosion uses blue color
                 explosions.add(new Explosion(player.getX() + player.getWidth()/2, player.getY() + player.getHeight()/2, new Color(100, 150, 255)));
                 if (lives <= 0) {
                     gameOver(false);
@@ -325,37 +325,37 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     updateExplosions();
     }
     
-    // Phương thức mới để xác định màu vụ nổ cho từng loại máy bay
+    // New method to determine explosion color for each aircraft type
     private Color getExplosionColorForAircraft(String aircraftType) {
         switch (aircraftType) {
-            // Level 1 - Máy bay Pháp
+            // Level 1 - French aircraft
             case "morane":
-                return new Color(255, 100, 100); // Đỏ sáng - máy bay chiến đấu nhẹ
+                return new Color(255, 100, 100); // Bright red - light fighter aircraft
             case "spitfire":
-                return new Color(255, 150, 50); // Cam đỏ - máy bay chiến đấu nổi tiếng
+                return new Color(255, 150, 50); // Orange-red - famous fighter aircraft
             case "bearcat":
-                return new Color(255, 200, 0); // Vàng - máy bay mạnh mẽ
+                return new Color(255, 200, 0); // Yellow - powerful aircraft
             case "dakota":
-                return new Color(150, 150, 255); // Xanh tím - máy bay vận tải
+                return new Color(150, 150, 255); // Purple-blue - transport aircraft
                 
-            // Level 2 - Máy bay Mỹ thời kỳ đầu
+            // Level 2 - Early US aircraft
             case "f105":
-                return new Color(255, 80, 80); // Đỏ đậm - máy bay ném bom chiến thuật
+                return new Color(255, 80, 80); // Dark red - tactical bomber
             case "f4phantom":
-                return new Color(200, 100, 255); // Tím - máy bay đa nhiệm
+                return new Color(200, 100, 255); // Purple - multirole aircraft
             case "b26":
-                return new Color(255, 165, 0); // Cam - máy bay ném bom trung bình
+                return new Color(255, 165, 0); // Orange - medium bomber
                 
-            // Level 3 - Không chiến
+            // Level 3 - Air combat
             case "skyhawk":
-                return new Color(0, 255, 150); // Xanh lá sáng - máy bay tấn công nhẹ
+                return new Color(0, 255, 150); // Bright green - light attack aircraft
                 
-            // Level 4 - Máy bay lớn
+            // Level 4 - Large aircraft
             case "b52":
-                return new Color(255, 50, 50); // Đỏ rực - máy bay ném bom chiến lược khổng lồ
+                return new Color(255, 50, 50); // Bright red - giant strategic bomber
                 
             default:
-                return new Color(255, 180, 60); // Màu mặc định (cam/vàng cũ)
+                return new Color(255, 180, 60); // Default color (old orange/yellow)
         }
     }
 
