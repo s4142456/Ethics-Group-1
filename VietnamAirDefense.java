@@ -62,6 +62,34 @@ public class VietnamAirDefense extends JFrame {
 }
 
 class GamePanel extends JPanel implements ActionListener, KeyListener {
+    // Track if enemy index overlay is open
+    private boolean showEnemyIndex = false;
+    // Track destroyed enemy types for index
+    private java.util.Set<String> destroyedTypes = new java.util.HashSet<>();
+
+    // Aircraft index data
+    private static final class AircraftInfo {
+        final String key, name, desc;
+        final int level;
+        AircraftInfo(String key, String name, String desc, int level) {
+            this.key = key; this.name = name; this.desc = desc; this.level = level;
+        }
+    }
+    private static final AircraftInfo[] AIRCRAFT_INDEX = {
+        // Level 1
+        new AircraftInfo("morane", "Morane-Saulnier MS.406", "Light fighter, outdated but nimble. Once France's pride in WWII, now a relic in Indochina skies.", 1),
+        new AircraftInfo("spitfire", "Spitfire", "Legendary WWII fighter. Fast, agile, and iconic — a dangerous foe in the early war.", 1),
+        new AircraftInfo("bearcat", "F8F Bearcat", "Beast of the sky. Powerful engine, high speed, France's top fighter by 1951.", 1),
+        new AircraftInfo("dakota", "Dakota (C-47)", "Slow but vital transport. Carried supplies into Dien Bien Phu — prime target for AA fire.", 1),
+        // Level 2
+        new AircraftInfo("f105", "F-105 Thunderchief", "Supersonic strike jet. Built for speed and bombing runs, but vulnerable to AA fire in low passes.", 2),
+        new AircraftInfo("f4phantom", "F-4 Phantom II", "All-round powerhouse. Twin engines, missiles, and guns — the backbone of US air power.", 2),
+        new AircraftInfo("b26", "B-26 Invader", "Old-school bomber. Twin props, packs heavy bombs, mostly used for close support early in the war.", 2),
+        // Level 3
+        new AircraftInfo("skyhawk", "A-4 Skyhawk", "Compact attack jet. Small, fast, and hard to hit — nicknamed 'Scooter' by its pilots.", 3),
+        // Level 4
+        new AircraftInfo("b52", "B-52 Stratofortress", "Flying fortress of the jet age. Massive payload, devastating raids — but a huge target for SAMs.", 4),
+    };
     // Show historical info at level start
     private boolean showLevelIntro = false;
     private String levelIntroText = "";
@@ -422,22 +450,21 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
     
     private void checkCollisions() {
-    // Check player bullets vs enemies
+        // Check player bullets vs enemies
         Iterator<Bullet> itB = playerBullets.iterator();
         while (itB.hasNext()) {
             Bullet bullet = itB.next();
             Rectangle bulletBounds = bullet.getBounds();
-            
             Iterator<EnemyAircraft> itE = enemies.iterator();
             while (itE.hasNext()) {
                 EnemyAircraft enemy = itE.next();
                 if (bulletBounds.intersects(enemy.getBounds())) {
                     enemy.damage(bullet.getDamage());
                     itB.remove();
-                    
+                    // Track destroyed type
+                    destroyedTypes.add(enemy.getSpriteKey());
                     // Determine explosion color based on aircraft type
                     Color explosionColor = getExplosionColorForAircraft(enemy.getSpriteKey());
-                    
                     if (enemy.isDestroyed()) {
                         itE.remove();
                         score += 100;
@@ -453,38 +480,21 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 }
             }
         }
-        
-        // Check enemy bullets vs player
-        Iterator<Bullet> itEB = enemyBullets.iterator();
-        while (itEB.hasNext()) {
-            Bullet bullet = itEB.next();
-            if (bullet.getBounds().intersects(player.getBounds())) {
-        itEB.remove();
-        lives -= bullet.getDamage();
-                // Player's explosion uses blue color
-                explosions.add(new Explosion(player.getX() + player.getWidth()/2, player.getY() + player.getHeight()/2, new Color(100, 150, 255)));
-                if (lives <= 0) {
-                    gameOver(false);
-                }
-            }
-        }
-    // Update explosion animations
-    updateExplosions();
+        // ...existing code...
     }
-    
-    // New method to determine explosion color for each aircraft type
-    private Color getExplosionColorForAircraft(String aircraftType) {
-        switch (aircraftType) {
-            // Level 1 - French aircraft
+
+    // Helper to get explosion color for aircraft type
+    private Color getExplosionColorForAircraft(String key) {
+        switch (key) {
+            // Level 1
             case "morane":
-                return new Color(255, 100, 100); // Bright red - light fighter aircraft
+                return new Color(180, 180, 180); // Gray - old fighter
             case "spitfire":
-                return new Color(255, 150, 50); // Orange-red - famous fighter aircraft
+                return new Color(120, 200, 255); // Blue - iconic fighter
             case "bearcat":
-                return new Color(255, 200, 0); // Yellow - powerful aircraft
+                return new Color(255, 255, 80); // Yellow - top fighter
             case "dakota":
                 return new Color(150, 150, 255); // Purple-blue - transport aircraft
-                
             // Level 2 - Early US aircraft
             case "f105":
                 return new Color(255, 80, 80); // Dark red - tactical bomber
@@ -492,15 +502,12 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 return new Color(200, 100, 255); // Purple - multirole aircraft
             case "b26":
                 return new Color(255, 165, 0); // Orange - medium bomber
-                
             // Level 3 - Air combat
             case "skyhawk":
                 return new Color(0, 255, 150); // Bright green - light attack aircraft
-                
             // Level 4 - Large aircraft
             case "b52":
                 return new Color(255, 50, 50); // Bright red - giant strategic bomber
-                
             default:
                 return new Color(255, 180, 60); // Default color (old orange/yellow)
         }
@@ -539,8 +546,11 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-        
-        if (showLevelIntro) {
+
+        // Show enemy index overlay above all if active
+        if (showEnemyIndex) {
+            drawEnemyIndexOverlay(g2);
+        } else if (showLevelIntro) {
             drawLevelIntro(g2);
         } else if (showNextLevelScreen) {
             drawNextLevelScreen(g2);
@@ -578,7 +588,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 case VICTORY -> drawVictory(g2);
             }
         }
-        
+
         g2.dispose();
     }
 
@@ -595,36 +605,43 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.setColor(new Color(40, 40, 40, 240));
         g2.fillRoundRect(menuX, menuY, menuWidth, menuHeight, 30, 30);
 
-    // Draw "Paused" title (largest)
-    g2.setColor(Color.YELLOW);
-    g2.setFont(new Font("Arial", Font.BOLD, 54));
-    String title = "Paused";
-    int titleX = (WIDTH - g2.getFontMetrics().stringWidth(title)) / 2;
-    g2.drawString(title, titleX, menuY + 70);
+        // Draw "Paused" title (largest)
+        g2.setColor(Color.YELLOW);
+        g2.setFont(new Font("Arial", Font.BOLD, 54));
+        String title = "Paused";
+        int titleX = (WIDTH - g2.getFontMetrics().stringWidth(title)) / 2;
+        g2.drawString(title, titleX, menuY + 70);
 
-    // Draw "Press P to resume" message (medium)
-    g2.setFont(new Font("Arial", Font.PLAIN, 22));
-    g2.setColor(Color.WHITE);
-    String resumeMsg = "Press P to resume";
-    int resumeX = (WIDTH - g2.getFontMetrics().stringWidth(resumeMsg)) / 2;
-    g2.drawString(resumeMsg, resumeX, menuY + 110);
+        // Draw "Press P to resume" message (medium)
+        g2.setFont(new Font("Arial", Font.PLAIN, 22));
+        g2.setColor(Color.WHITE);
+        String resumeMsg = "Press P to resume";
+        int resumeX = (WIDTH - g2.getFontMetrics().stringWidth(resumeMsg)) / 2;
+        g2.drawString(resumeMsg, resumeX, menuY + 110);
 
-    // Draw "Adjust volume" label (smaller)
-    g2.setFont(new Font("Arial", Font.PLAIN, 18));
-    String adjustLabel = "Adjust volume:";
-    int adjustX = (WIDTH - g2.getFontMetrics().stringWidth(adjustLabel)) / 2;
-    g2.drawString(adjustLabel, adjustX, menuY + 145);
+        // Draw "Adjust volume" label (smaller)
+        g2.setFont(new Font("Arial", Font.PLAIN, 18));
+        String adjustLabel = "Adjust volume:";
+        int adjustX = (WIDTH - g2.getFontMetrics().stringWidth(adjustLabel)) / 2;
+        g2.drawString(adjustLabel, adjustX, menuY + 145);
 
-    // Draw "Bullet Volume:" label above slider (smallest)
+        // Draw "Bullet Volume:" label above slider (smallest)
+        g2.setFont(new Font("Arial", Font.PLAIN, 16));
+        String volLabel = "Bullet Volume:";
+        int volx = (WIDTH - g2.getFontMetrics().stringWidth(volLabel)) / 2;
+        g2.drawString(volLabel, volx, menuY + 170);
+
+        // Position and show the volume slider below the label
+        if (volumeSlider == null) setupVolumeSlider();
+        volumeSlider.setBounds(WIDTH/2 - 100, menuY + 185, 200, 40);
+        setupVolumeSlider();
+
+    // Draw 'Press E for Enemy Index' prompt below the volume bar
     g2.setFont(new Font("Arial", Font.PLAIN, 16));
-    String volLabel = "Bullet Volume:";
-    int volx = (WIDTH - g2.getFontMetrics().stringWidth(volLabel)) / 2;
-    g2.drawString(volLabel, volx, menuY + 170);
-
-    // Position and show the volume slider below the label
-    if (volumeSlider == null) setupVolumeSlider();
-    volumeSlider.setBounds(WIDTH/2 - 100, menuY + 185, 200, 40);
-    setupVolumeSlider();
+    String eMsg = "Press E for Enemy Index";
+    int eMsgX = (WIDTH - g2.getFontMetrics().stringWidth(eMsg)) / 2;
+    g2.setColor(Color.CYAN);
+    g2.drawString(eMsg, eMsgX, menuY + 245);
     }
     
     private void drawInstructions(Graphics2D g2) {
@@ -789,6 +806,30 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     
     @Override
     public void keyPressed(KeyEvent e) {
+        // Advance from history intro or summary to gameplay
+        if ((state == GameState.HISTORY_INTRO || state == GameState.HISTORY_SUMMARY) && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            state = GameState.PLAYING;
+            if (timer != null) timer.start();
+            repaint();
+            return;
+        }
+        // Handle enemy index overlay open/close
+        if (showEnemyIndex) {
+            if (e.getKeyCode() == KeyEvent.VK_E || e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+                showEnemyIndex = false;
+                // Show slider again if still paused
+                if (state == GameState.PAUSED) setupVolumeSlider();
+                repaint();
+            }
+            return;
+        }
+        // Open enemy index overlay if paused and E is pressed
+        if (state == GameState.PAUSED && e.getKeyCode() == KeyEvent.VK_E) {
+            showEnemyIndex = true;
+            hideVolumeSlider();
+            repaint();
+            return;
+        }
         // Dismiss level intro on SPACE
         if (showLevelIntro && e.getKeyCode() == KeyEvent.VK_SPACE) {
             showLevelIntro = false;
@@ -797,96 +838,100 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             repaint();
             return;
         }
-        // Handle next level screen
-        if (showNextLevelScreen && e.getKeyCode() == KeyEvent.VK_SPACE && nextLevelToStart > 0 && nextLevelToStart <= LevelData.LEVELS.length) {
-            showNextLevelScreen = false;
-            startLevel(nextLevelToStart);
-            state = GameState.HISTORY_INTRO;
+        // Start game from menu
+        if (state == GameState.MENU && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            startLevel(1);
+            state = GameState.PLAYING;
             if (timer != null) timer.start();
+            repaint();
             return;
         }
-        // Handle next level screen
-        if (showNextLevelScreen && e.getKeyCode() == KeyEvent.VK_SPACE && nextLevelToStart > 0 && nextLevelToStart <= LevelData.LEVELS.length) {
-            showNextLevelScreen = false;
-            startLevel(nextLevelToStart);
-            state = GameState.HISTORY_INTRO;
+        // Resume from pause
+        if (state == GameState.PAUSED && e.getKeyCode() == KeyEvent.VK_P) {
+            state = GameState.PLAYING;
+            hideVolumeSlider();
             if (timer != null) timer.start();
+            repaint();
             return;
         }
+        // Advance from next level screen
+        if (showNextLevelScreen && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            showNextLevelScreen = false;
+            startLevel(nextLevelToStart);
+            state = GameState.PLAYING;
+            if (timer != null) timer.start();
+            repaint();
+            return;
+        }
+        // Resume from victory/game over with R
+        if ((state == GameState.GAME_OVER || state == GameState.VICTORY) && e.getKeyCode() == KeyEvent.VK_R) {
+            state = GameState.MENU;
+            repaint();
+            return;
+        }
+        // Instructions screen: ESC to return to menu
+        if (state == GameState.INSTRUCTIONS && e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+            state = GameState.MENU;
+            repaint();
+            return;
+        }
+        // Instructions screen: I to return to menu
+        if (state == GameState.INSTRUCTIONS && e.getKeyCode() == KeyEvent.VK_I) {
+            state = GameState.MENU;
+            repaint();
+            return;
+        }
+        // Menu: I for instructions
+        if (state == GameState.MENU && e.getKeyCode() == KeyEvent.VK_I) {
+            state = GameState.INSTRUCTIONS;
+            repaint();
+            return;
+        }
+        // Pause game with P
+        if (state == GameState.PLAYING && e.getKeyCode() == KeyEvent.VK_P) {
+            state = GameState.PAUSED;
+            setupVolumeSlider();
+            if (timer != null) timer.stop();
+            repaint();
+            return;
+        }
+        // Movement and shooting keys
         switch (e.getKeyCode()) {
             case KeyEvent.VK_LEFT -> leftPressed = true;
             case KeyEvent.VK_RIGHT -> rightPressed = true;
             case KeyEvent.VK_UP -> upPressed = true;
             case KeyEvent.VK_DOWN -> downPressed = true;
-            case KeyEvent.VK_P -> {
-                if (state == GameState.PLAYING) {
-                    state = GameState.PAUSED;
-                    if (timer != null) timer.stop();
-                    repaint(); // Show pause overlay immediately
-                    setupVolumeSlider();
-                } else if (state == GameState.PAUSED) {
-                    state = GameState.PLAYING;
-                    if (timer != null) timer.start();
-                    hideVolumeSlider();
-                    repaint(); // Remove pause overlay immediately
-                }
-            }
-            case KeyEvent.VK_I -> {
-                if (state == GameState.MENU || state == GameState.PLAYING || state == GameState.PAUSED) {
-                    prevState = state;
-                    state = GameState.INSTRUCTIONS;
-                    if (prevState == GameState.PAUSED) {
-                        hideVolumeSlider();
-                    } else if (prevState == GameState.PLAYING && timer != null) {
-                        timer.stop();
-                    }
-                    repaint(); // Ensure instructions are drawn immediately
-                }
-            }
-            case KeyEvent.VK_ESCAPE -> {
-                if (state == GameState.INSTRUCTIONS) {
-                    if (prevState == GameState.PLAYING && timer != null) {
-                        timer.start();
-                    } else if (prevState == GameState.PAUSED) {
-                        setupVolumeSlider();
-                    }
-                    state = (prevState != null) ? prevState : GameState.MENU;
-                    prevState = null;
-                    repaint(); // Ensure game or pause overlay is redrawn
-                }
-            }
-            case KeyEvent.VK_SPACE -> {
-                spacePressed = true;
-                if (state == GameState.MENU) {
-                    state = GameState.HISTORY_INTRO;
-                    currentLevel = 1;
-                    startLevel(currentLevel);
-                } else if (state == GameState.HISTORY_INTRO) {
-                    state = GameState.PLAYING;
-                } else if (state == GameState.HISTORY_SUMMARY) {
-                    currentLevel++;
-                    planesShot = 0;
-                    if (currentLevel <= LevelData.LEVELS.length) {
-                        startLevel(currentLevel);
-                        state = GameState.HISTORY_INTRO;
-                        if (timer != null) timer.start();
-                    } else {
-                        state = GameState.VICTORY;
-                    }
-                }
-            }
-            case KeyEvent.VK_R -> {
-                if (state == GameState.GAME_OVER || state == GameState.VICTORY) {
-                    state = GameState.MENU;
-                    score = 0;
-                    currentLevel = 0;
-                    lives = 2;  // Reset lives when restarting game
-                    AssetManager.getInstance().playMusic("bgm_menu", true);
-                }
-            }
+            case KeyEvent.VK_SPACE -> spacePressed = true;
         }
     }
-    
+
+    // Draw the enemy index overlay (only show info for defeated types)
+    private void drawEnemyIndexOverlay(Graphics2D g2) {
+        g2.setColor(new Color(0, 0, 0, 230));
+        g2.fillRect(0, 0, WIDTH, HEIGHT);
+        int margin = 60;
+        int y = 80;
+        g2.setFont(new Font("Arial", Font.BOLD, 28));
+        g2.setColor(Color.CYAN);
+        String title = "Enemy Aircraft Index";
+        int titleX = (WIDTH - g2.getFontMetrics().stringWidth(title)) / 2;
+        g2.drawString(title, titleX, y);
+        y += 40;
+        g2.setFont(new Font("Arial", Font.PLAIN, 16));
+        for (AircraftInfo info : AIRCRAFT_INDEX) {
+            boolean destroyed = destroyedTypes.contains(info.key);
+            String label = destroyed ? (info.name + " - " + info.desc) : "???";
+            g2.setColor(destroyed ? new Color(80, 255, 80) : Color.LIGHT_GRAY);
+            g2.drawString(label, margin, y);
+            y += 28;
+        }
+        g2.setFont(new Font("Arial", Font.BOLD, 18));
+        g2.setColor(Color.YELLOW);
+        String closeMsg = "Press E or ESC to close";
+        int closeX = (WIDTH - g2.getFontMetrics().stringWidth(closeMsg)) / 2;
+        g2.drawString(closeMsg, closeX, HEIGHT - 60);
+    }
+
     @Override
     public void keyReleased(KeyEvent e) {
         switch (e.getKeyCode()) {
@@ -898,7 +943,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             // No action needed for P on release
         }
     }
-    
+
     @Override
     public void keyTyped(KeyEvent e) {}
 }
