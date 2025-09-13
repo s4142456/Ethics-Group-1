@@ -62,6 +62,89 @@ public class VietnamAirDefense extends JFrame {
 }
 
 class GamePanel extends JPanel implements ActionListener, KeyListener {
+    // Show historical info at level start
+    private boolean showLevelIntro = false;
+    private String levelIntroText = "";
+    private void showLevelIntro(int level) {
+        showLevelIntro = true;
+        switch (level) {
+            case 1 -> levelIntroText = "Level 1 - First Indochina War (1946-1954)\nAfter the August Revolution, French colonists returned to invade Vietnam. Despite limited resources, our forces innovatively created an air defense system using infantry guns, heavy machine guns, and 37mm anti-aircraft artillery.\nThe Battle of Dien Bien Phu in 1954 was the pinnacle: 37mm anti-aircraft guns shot down dozens of Dakota transport planes, contributing decisively to the historic victory.\n\nMission: Use the 37mm anti-aircraft gun to protect the battlefield from enemy aircraft.";
+            case 2 -> levelIntroText = "Level 2 - Early Vietnam War (1965-1968)\nThe US deployed troops directly to South Vietnam and expanded the war to North Vietnam. Modern aircraft like F-105s and F-4 Phantoms continuously conducted bombing raids.\nVietnamese air defense was upgraded with 100mm anti-aircraft guns, coordinating with radar and militia forces.\n\nMission: Use anti-aircraft artillery to prevent bombing raids and protect the homeland.";
+            case 3 -> levelIntroText = "Level 3 - MiG-21 Air Combat (1969-1972)\nThe Vietnam People's Air Force officially entered the air combat phase. Young pilots flying MiG-21s directly engaged US fighters in the skies.\nAir battles became contests of skill and strategy between pilots from both sides.\n\nMission: Control the MiG-21 to destroy enemy aircraft in intense dogfights.";
+            case 4 -> levelIntroText = "Level 4 - 'Hanoi's Dien Bien Phu in the Air' (1972)\nThe US launched Operation Linebacker II, deploying hundreds of B-52 bombers to bomb Hanoi. This was the fiercest battle, where SAM-2 missiles and anti-aircraft artillery coordinated closely to protect the capital.\nIn 12 days and nights, our forces shot down 81 US aircraft, including 34 B-52s - an unprecedented achievement.\n\nMission: Control SAM-2 missiles to shoot down B-52s and protect Hanoi from aerial devastation.";
+        }
+        repaint();
+    }
+
+    // Helper to wrap text for the level intro overlay
+    private java.util.List<String> wrapLines(String text, Font bodyFont, int maxWidth, Graphics2D g2) {
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        Font missionFont = new Font("Arial", Font.BOLD, 20);
+        for (String paragraph : text.split("\\n")) {
+            if (paragraph.isEmpty()) {
+                lines.add("");
+                continue;
+            }
+            boolean isMission = paragraph.startsWith("Mission:");
+            Font useFont = isMission ? missionFont : bodyFont;
+            String[] words = paragraph.split(" ");
+            StringBuilder line = new StringBuilder();
+            for (String word : words) {
+                String testLine = line.length() == 0 ? word : line + " " + word;
+                if (g2.getFontMetrics(useFont).stringWidth(testLine) > maxWidth) {
+                    lines.add(line.toString());
+                    line = new StringBuilder(word);
+                } else {
+                    line = new StringBuilder(testLine);
+                }
+            }
+            if (line.length() > 0) lines.add(line.toString());
+        }
+        return lines;
+    }
+
+    private void drawLevelIntro(Graphics2D g2) {
+        g2.setColor(new Color(0, 0, 0, 230));
+        g2.fillRect(0, 0, WIDTH, HEIGHT);
+        int margin = 60;
+        int maxWidth = WIDTH - 2 * margin;
+        int y = 100;
+        Font titleFont = new Font("Arial", Font.BOLD, 28);
+        Font bodyFont = new Font("Arial", Font.PLAIN, 18);
+        Font missionFont = new Font("Arial", Font.BOLD, 20);
+        // Title
+        g2.setFont(titleFont);
+        g2.setColor(Color.YELLOW);
+        java.util.List<String> lines = wrapLines(levelIntroText, bodyFont, maxWidth, g2);
+        boolean titleDrawn = false;
+        boolean inMission = false;
+        for (String line : lines) {
+            if (!titleDrawn) {
+                g2.setFont(titleFont);
+                g2.setColor(Color.YELLOW);
+                titleDrawn = true;
+            } else if (line.startsWith("Mission:")) {
+                g2.setFont(missionFont);
+                g2.setColor(Color.CYAN);
+                inMission = true;
+            } else if (inMission && !line.isEmpty()) {
+                g2.setFont(missionFont);
+                g2.setColor(Color.CYAN);
+            } else {
+                g2.setFont(bodyFont);
+                g2.setColor(Color.WHITE);
+                inMission = false;
+            }
+            int x = margin;
+            g2.drawString(line, x, y);
+            y += 28;
+        }
+        g2.setFont(new Font("Arial", Font.BOLD, 20));
+        g2.setColor(Color.GREEN);
+        String prompt = "Press SPACE to start";
+        int px = (WIDTH - g2.getFontMetrics().stringWidth(prompt)) / 2;
+        g2.drawString(prompt, px, HEIGHT - 60);
+    }
     // Store previous state for returning from instructions
     private GameState prevState = null;
     // Draw the next level screen overlay
@@ -164,8 +247,9 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     }
     
     private void startLevel(int level) {
-        currentLevel = level;
-        levelData = LevelData.LEVELS[level - 1];
+    currentLevel = level;
+    levelData = LevelData.LEVELS[level - 1];
+    showLevelIntro(level);
 
     // Enemy fire rate per level. Only faster shooting for level 4
         if (level == 4) {
@@ -456,7 +540,9 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-        if (showNextLevelScreen) {
+        if (showLevelIntro) {
+            drawLevelIntro(g2);
+        } else if (showNextLevelScreen) {
             drawNextLevelScreen(g2);
         } else {
             switch (state) {
@@ -703,6 +789,14 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     
     @Override
     public void keyPressed(KeyEvent e) {
+        // Dismiss level intro on SPACE
+        if (showLevelIntro && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            showLevelIntro = false;
+            state = GameState.HISTORY_INTRO;
+            if (timer != null) timer.start();
+            repaint();
+            return;
+        }
         // Handle next level screen
         if (showNextLevelScreen && e.getKeyCode() == KeyEvent.VK_SPACE && nextLevelToStart > 0 && nextLevelToStart <= LevelData.LEVELS.length) {
             showNextLevelScreen = false;
