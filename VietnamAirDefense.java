@@ -62,6 +62,9 @@ public class VietnamAirDefense extends JFrame {
 }
 
 class GamePanel extends JPanel implements ActionListener, KeyListener {
+    // Show 'Enemy archive updated!' message
+    private boolean showArchiveMsg = false;
+    private long archiveMsgTime = 0;
     // Track if enemy index overlay is open
     private boolean showEnemyIndex = false;
     // Track destroyed enemy types for index
@@ -76,19 +79,19 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         }
     }
     private static final AircraftInfo[] AIRCRAFT_INDEX = {
-        // Level 1
-        new AircraftInfo("morane", "Morane-Saulnier MS.406", "Light fighter, outdated but nimble. Once France's pride in WWII, now a relic in Indochina skies.", 1),
-        new AircraftInfo("spitfire", "Spitfire", "Legendary WWII fighter. Fast, agile, and iconic — a dangerous foe in the early war.", 1),
-        new AircraftInfo("bearcat", "F8F Bearcat", "Beast of the sky. Powerful engine, high speed, France's top fighter by 1951.", 1),
-        new AircraftInfo("dakota", "Dakota (C-47)", "Slow but vital transport. Carried supplies into Dien Bien Phu — prime target for AA fire.", 1),
-        // Level 2
-        new AircraftInfo("f105", "F-105 Thunderchief", "Supersonic strike jet. Built for speed and bombing runs, but vulnerable to AA fire in low passes.", 2),
-        new AircraftInfo("f4phantom", "F-4 Phantom II", "All-round powerhouse. Twin engines, missiles, and guns — the backbone of US air power.", 2),
-        new AircraftInfo("b26", "B-26 Invader", "Old-school bomber. Twin props, packs heavy bombs, mostly used for close support early in the war.", 2),
-        // Level 3
-        new AircraftInfo("skyhawk", "A-4 Skyhawk", "Compact attack jet. Small, fast, and hard to hit — nicknamed 'Scooter' by its pilots.", 3),
-        // Level 4
-        new AircraftInfo("b52", "B-52 Stratofortress", "Flying fortress of the jet age. Massive payload, devastating raids — but a huge target for SAMs.", 4),
+    // Level 1
+    new AircraftInfo("morane", "Morane-Saulnier MS.406", "Light fighter, outdated but nimble. Once France's pride in WWII, now a relic in Indochina skies.", 1),
+    new AircraftInfo("spitfire", "Spitfire", "Legendary WWII fighter. Fast, agile, and iconic. A dangerous foe in the early war.", 1),
+    new AircraftInfo("bearcat", "F8F Bearcat", "Beast of the sky: powerful engine, high speed. France's top fighter by 1951.", 1),
+    new AircraftInfo("dakota", "Dakota (C-47)", "Slow but vital transport. Carried supplies into Dien Bien Phu. Prime target for AA fire.", 1),
+    // Level 2
+    new AircraftInfo("f105", "F-105 Thunderchief", "Supersonic strike jet. Built for speed and bombing runs. Vulnerable to AA fire in low passes.", 2),
+    new AircraftInfo("f4phantom", "F-4 Phantom II", "All-round powerhouse: twin engines, missiles, and guns. Backbone of US air power.", 2),
+    new AircraftInfo("b26", "B-26 Invader", "Old-school bomber. Twin props, heavy bombs. Mostly used for close support early in the war.", 2),
+    // Level 3
+    new AircraftInfo("skyhawk", "A-4 Skyhawk", "Compact attack jet. Small, fast, and hard to hit. Nicknamed 'Scooter' by its pilots.", 3),
+    // Level 4
+    new AircraftInfo("b52", "B-52 Stratofortress", "Flying fortress of the jet age. Massive payload, devastating raids. Huge target for SAMs.", 4),
     };
     // Show historical info at level start
     private boolean showLevelIntro = false;
@@ -415,13 +418,16 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             lastEnemyShot = now;
         }
         
-    // Update bullets
+        // Update bullets
         updateBullets();
-        
-    // Check collisions
+
+        // Update explosions (remove finished ones)
+        updateExplosions();
+
+        // Check collisions
         checkCollisions();
-        
-    // Check win condition: only when all waves spawned and no enemies remain
+
+        // Check win condition: only when all waves spawned and no enemies remain
         if (enemies.isEmpty() && (wavePlan == null || currentWaveIndex >= wavePlan.size())) {
             victory();
         }
@@ -461,10 +467,15 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 if (bulletBounds.intersects(enemy.getBounds())) {
                     enemy.damage(bullet.getDamage());
                     itB.remove();
-                    // Track destroyed type
-                    destroyedTypes.add(enemy.getSpriteKey());
+                    // Track destroyed type and show archive message if new
+                    String type = enemy.getSpriteKey();
+                    if (!destroyedTypes.contains(type)) {
+                        destroyedTypes.add(type);
+                        showArchiveMsg = true;
+                        archiveMsgTime = System.currentTimeMillis();
+                    }
                     // Determine explosion color based on aircraft type
-                    Color explosionColor = getExplosionColorForAircraft(enemy.getSpriteKey());
+                    Color explosionColor = getExplosionColorForAircraft(type);
                     if (enemy.isDestroyed()) {
                         itE.remove();
                         score += 100;
@@ -586,6 +597,21 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 }
                 case GAME_OVER -> drawGameOver(g2);
                 case VICTORY -> drawVictory(g2);
+            }
+        }
+
+        // Draw 'Enemy archive updated!' message if needed
+        if (showArchiveMsg) {
+            long now = System.currentTimeMillis();
+            if (now - archiveMsgTime < 2000) {
+                String msg = "Enemy archive updated!";
+                g2.setFont(new Font("Arial", Font.BOLD, 28));
+                g2.setColor(Color.ORANGE);
+                int msgX = (WIDTH - g2.getFontMetrics().stringWidth(msg)) / 2;
+                int msgY = HEIGHT - 80;
+                g2.drawString(msg, msgX, msgY);
+            } else {
+                showArchiveMsg = false;
             }
         }
 
@@ -820,7 +846,9 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                 // Show slider again if still paused
                 if (state == GameState.PAUSED) setupVolumeSlider();
                 repaint();
+                return;
             }
+            // Prevent any other key from doing anything while overlay is open
             return;
         }
         // Open enemy index overlay if paused and E is pressed
@@ -846,8 +874,8 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             repaint();
             return;
         }
-        // Resume from pause
-        if (state == GameState.PAUSED && e.getKeyCode() == KeyEvent.VK_P) {
+        // Resume from pause (P or ESC)
+        if (state == GameState.PAUSED && (e.getKeyCode() == KeyEvent.VK_P || e.getKeyCode() == KeyEvent.VK_ESCAPE)) {
             state = GameState.PLAYING;
             hideVolumeSlider();
             if (timer != null) timer.start();
@@ -911,6 +939,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.fillRect(0, 0, WIDTH, HEIGHT);
         int margin = 60;
         int y = 80;
+        int maxWidth = WIDTH - 2 * margin;
         g2.setFont(new Font("Arial", Font.BOLD, 28));
         g2.setColor(Color.CYAN);
         String title = "Enemy Aircraft Index";
@@ -920,10 +949,31 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.setFont(new Font("Arial", Font.PLAIN, 16));
         for (AircraftInfo info : AIRCRAFT_INDEX) {
             boolean destroyed = destroyedTypes.contains(info.key);
-            String label = destroyed ? (info.name + " - " + info.desc) : "???";
+            String label = destroyed ? (info.name + ": " + info.desc) : "???";
             g2.setColor(destroyed ? new Color(80, 255, 80) : Color.LIGHT_GRAY);
-            g2.drawString(label, margin, y);
-            y += 28;
+            // Wrap label if too long
+            java.util.List<String> lines = new java.util.ArrayList<>();
+            if (destroyed) {
+                String[] words = label.split(" ");
+                StringBuilder line = new StringBuilder();
+                for (String word : words) {
+                    String testLine = line.length() == 0 ? word : line + " " + word;
+                    if (g2.getFontMetrics().stringWidth(testLine) > maxWidth) {
+                        lines.add(line.toString());
+                        line = new StringBuilder(word);
+                    } else {
+                        line = new StringBuilder(testLine);
+                    }
+                }
+                if (line.length() > 0) lines.add(line.toString());
+            } else {
+                lines.add(label);
+            }
+            for (String l : lines) {
+                g2.drawString(l, margin, y);
+                y += 20;
+            }
+            y += 8;
         }
         g2.setFont(new Font("Arial", Font.BOLD, 18));
         g2.setColor(Color.YELLOW);
