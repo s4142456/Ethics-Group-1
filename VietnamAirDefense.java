@@ -62,6 +62,25 @@ public class VietnamAirDefense extends JFrame {
 }
 
 class GamePanel extends JPanel implements ActionListener, KeyListener {
+    // Draw the next level screen overlay
+    private void drawNextLevelScreen(Graphics2D g2) {
+        g2.setColor(new Color(0, 0, 0, 220));
+        g2.fillRect(0, 0, WIDTH, HEIGHT);
+        g2.setColor(Color.YELLOW);
+        g2.setFont(new Font("Arial", Font.BOLD, 48));
+        String msg = "Level Complete!";
+        int msgX = (WIDTH - g2.getFontMetrics().stringWidth(msg)) / 2;
+        g2.drawString(msg, msgX, HEIGHT/2 - 40);
+        g2.setFont(new Font("Arial", Font.PLAIN, 28));
+        String next = "Press SPACE for next level";
+        int nextX = (WIDTH - g2.getFontMetrics().stringWidth(next)) / 2;
+        g2.setColor(Color.WHITE);
+        g2.drawString(next, nextX, HEIGHT/2 + 20);
+    }
+    // Draw the next level screen overlay
+    // Next level screen state
+    private boolean showNextLevelScreen = false;
+    private int nextLevelToStart = 0;
     // Volume control for bullet sounds
     private float bulletVolume = 1.0f; // 0.0 (mute) to 1.0 (max)
     private JSlider volumeSlider;
@@ -417,13 +436,12 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     
     private void victory() {
         if (currentLevel < LevelData.LEVELS.length) {
-            state = GameState.HISTORY_SUMMARY;
-            // ensure the history panel is recreated and visible immediately
-            historyPanel = null;
+            // Show next level screen after history summary
+            showNextLevelScreen = true;
+            nextLevelToStart = currentLevel + 1;
             if (timer != null) timer.stop();
             AssetManager.getInstance().stopAllMusic();
             AssetManager.getInstance().playSound("victory");
-            System.out.println("DEBUG: Entering HISTORY_SUMMARY for level " + currentLevel + ", planesShot=" + planesShot + ", totalPlanes=" + totalPlanes);
             repaint();
         } else {
             gameOver(true);
@@ -436,37 +454,41 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         
-        switch (state) {
-            case MENU -> drawMenu(g2);
-            case INSTRUCTIONS -> drawInstructions(g2);
-            case HISTORY_INTRO, HISTORY_SUMMARY -> {
-                // Render history using HistoryPanel
-                if (historyPanel == null) {
-                    if (state == GameState.HISTORY_SUMMARY) {
-                        int total = totalPlanes > 0 ? totalPlanes : (enemies == null ? 0 : enemies.size());
-                        historyPanel = new HistoryPanel(levelData, false, planesShot, total);
-                    } else {
-                        historyPanel = new HistoryPanel(levelData, true);
+        if (showNextLevelScreen) {
+            drawNextLevelScreen(g2);
+        } else {
+            switch (state) {
+                case MENU -> drawMenu(g2);
+                case INSTRUCTIONS -> drawInstructions(g2);
+                case HISTORY_INTRO, HISTORY_SUMMARY -> {
+                    // Render history using HistoryPanel
+                    if (historyPanel == null) {
+                        if (state == GameState.HISTORY_SUMMARY) {
+                            int total = totalPlanes > 0 ? totalPlanes : (enemies == null ? 0 : enemies.size());
+                            historyPanel = new HistoryPanel(levelData, false, planesShot, total);
+                        } else {
+                            historyPanel = new HistoryPanel(levelData, true);
+                        }
                     }
+                    // paint history panel into this panel
+                    Graphics pg = g2.create();
+                    // debug overlay - indicate we are in history state
+                    g2.setColor(new Color(255, 40, 40));
+                    g2.setFont(new Font("Arial", Font.BOLD, 18));
+                    String dbg = "DEBUG: history state=" + state + " level=" + currentLevel;
+                    g2.drawString(dbg, 10, 22);
+                    historyPanel.setSize(getWidth(), getHeight());
+                    historyPanel.paint(pg);
+                    pg.dispose();
                 }
-                // paint history panel into this panel
-                Graphics pg = g2.create();
-                // debug overlay - indicate we are in history state
-                g2.setColor(new Color(255, 40, 40));
-                g2.setFont(new Font("Arial", Font.BOLD, 18));
-                String dbg = "DEBUG: history state=" + state + " level=" + currentLevel;
-                g2.drawString(dbg, 10, 22);
-                historyPanel.setSize(getWidth(), getHeight());
-                historyPanel.paint(pg);
-                pg.dispose();
+                case PLAYING -> drawGame(g2);
+                case PAUSED -> {
+                    drawGame(g2);
+                    drawPauseOverlay(g2);
+                }
+                case GAME_OVER -> drawGameOver(g2);
+                case VICTORY -> drawVictory(g2);
             }
-            case PLAYING -> drawGame(g2);
-            case PAUSED -> {
-                drawGame(g2);
-                drawPauseOverlay(g2);
-            }
-            case GAME_OVER -> drawGameOver(g2);
-            case VICTORY -> drawVictory(g2);
         }
         
         g2.dispose();
@@ -679,6 +701,22 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     
     @Override
     public void keyPressed(KeyEvent e) {
+        // Handle next level screen
+        if (showNextLevelScreen && e.getKeyCode() == KeyEvent.VK_SPACE && nextLevelToStart > 0 && nextLevelToStart <= LevelData.LEVELS.length) {
+            showNextLevelScreen = false;
+            startLevel(nextLevelToStart);
+            state = GameState.HISTORY_INTRO;
+            if (timer != null) timer.start();
+            return;
+        }
+        // Handle next level screen
+        if (showNextLevelScreen && e.getKeyCode() == KeyEvent.VK_SPACE && nextLevelToStart > 0 && nextLevelToStart <= LevelData.LEVELS.length) {
+            showNextLevelScreen = false;
+            startLevel(nextLevelToStart);
+            state = GameState.HISTORY_INTRO;
+            if (timer != null) timer.start();
+            return;
+        }
         switch (e.getKeyCode()) {
             case KeyEvent.VK_LEFT -> leftPressed = true;
             case KeyEvent.VK_RIGHT -> rightPressed = true;
