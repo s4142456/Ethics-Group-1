@@ -485,35 +485,36 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.setColor(new Color(40, 40, 40, 240));
         g2.fillRoundRect(menuX, menuY, menuWidth, menuHeight, 30, 30);
 
-        // Draw "Paused" title
-        g2.setColor(Color.YELLOW);
-        g2.setFont(new Font("Arial", Font.BOLD, 36));
-        String title = "Paused";
-        int titleX = (WIDTH - g2.getFontMetrics().stringWidth(title)) / 2;
-        g2.drawString(title, titleX, menuY + 55);
+    // Draw "Paused" title (largest)
+    g2.setColor(Color.YELLOW);
+    g2.setFont(new Font("Arial", Font.BOLD, 54));
+    String title = "Paused";
+    int titleX = (WIDTH - g2.getFontMetrics().stringWidth(title)) / 2;
+    g2.drawString(title, titleX, menuY + 70);
 
-        // Draw "Press P to resume" message
-        g2.setFont(new Font("Arial", Font.PLAIN, 22));
-        g2.setColor(Color.WHITE);
-        String resumeMsg = "Press P to resume";
-        int resumeX = (WIDTH - g2.getFontMetrics().stringWidth(resumeMsg)) / 2;
-        g2.drawString(resumeMsg, resumeX, menuY + 95);
+    // Draw "Press P to resume" message (medium)
+    g2.setFont(new Font("Arial", Font.PLAIN, 22));
+    g2.setColor(Color.WHITE);
+    String resumeMsg = "Press P to resume";
+    int resumeX = (WIDTH - g2.getFontMetrics().stringWidth(resumeMsg)) / 2;
+    g2.drawString(resumeMsg, resumeX, menuY + 110);
 
-        // Draw "Adjust volume" label
-        g2.setFont(new Font("Arial", Font.PLAIN, 20));
-        String adjustLabel = "Adjust volume:";
-        int adjustX = (WIDTH - g2.getFontMetrics().stringWidth(adjustLabel)) / 2;
-        g2.drawString(adjustLabel, adjustX, menuY + 135);
+    // Draw "Adjust volume" label (smaller)
+    g2.setFont(new Font("Arial", Font.PLAIN, 18));
+    String adjustLabel = "Adjust volume:";
+    int adjustX = (WIDTH - g2.getFontMetrics().stringWidth(adjustLabel)) / 2;
+    g2.drawString(adjustLabel, adjustX, menuY + 145);
 
-        // Draw "Bullet Volume:" label above slider
-        String volLabel = "Bullet Volume:";
-        int volx = (WIDTH - g2.getFontMetrics().stringWidth(volLabel)) / 2;
-        g2.drawString(volLabel, volx, menuY + 170);
+    // Draw "Bullet Volume:" label above slider (smallest)
+    g2.setFont(new Font("Arial", Font.PLAIN, 16));
+    String volLabel = "Bullet Volume:";
+    int volx = (WIDTH - g2.getFontMetrics().stringWidth(volLabel)) / 2;
+    g2.drawString(volLabel, volx, menuY + 170);
 
-        // Position and show the volume slider below the label
-        if (volumeSlider == null) setupVolumeSlider();
-        volumeSlider.setBounds(WIDTH/2 - 100, menuY + 185, 200, 40);
-        setupVolumeSlider();
+    // Position and show the volume slider below the label
+    if (volumeSlider == null) setupVolumeSlider();
+    volumeSlider.setBounds(WIDTH/2 - 100, menuY + 185, 200, 40);
+    setupVolumeSlider();
     }
     
     private void drawInstructions(Graphics2D g2) {
