@@ -53,11 +53,14 @@ public class AssetManager {
         loadImage("level3_player", "assets/image/level3_player.png");
         loadImage("level4_player", "assets/image/level4_player.png");
 
-        // Load player bullet images per level (new)
+        // Load player bullet images per level
         loadImage("bullet_level1", "assets/image/bullet_level1.png");
         loadImage("bullet_level2", "assets/image/bullet_level2.png");
         loadImage("bullet_level3", "assets/image/bullet_level3.png");
         loadImage("bullet_level4", "assets/image/bullet_level4.png");
+
+        // Load enemy bullet sprite (single image for all levels)
+        loadImage("enemy_bullet", "assets/image/enemy_bullet.png");
 
         // Load enemy images
         loadImage("morane", "assets/image/morane.png");

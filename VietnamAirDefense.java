@@ -62,6 +62,9 @@ public class VietnamAirDefense extends JFrame {
 }
 
 class GamePanel extends JPanel implements ActionListener, KeyListener {
+    // Enemy bullet visual size constants (tweak here for visibility)
+    private static final int ENEMY_BULLET_WIDTH = 16;
+    private static final int ENEMY_BULLET_HEIGHT = 40;
     // Show 'Enemy archive updated!' message
     private boolean showArchiveMsg = false;
     private long archiveMsgTime = 0;
@@ -428,9 +431,12 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (now - lastEnemyShot > enemyShotCooldown && !enemies.isEmpty()) {
             EnemyAircraft shooter = enemies.get(random.nextInt(enemies.size()));
             if (random.nextDouble() < 0.3) {
-                double bulletX = shooter.getX() + shooter.getWidth()/2 - 2;
-                double bulletY = shooter.getY() + shooter.getHeight();
-                enemyBullets.add(new Bullet(bulletX, bulletY, 5.0, false, "mig_shoot", bulletVolume));
+                // Enemy bullet spawn centered under shooter; use shared sprite
+                int bw = ENEMY_BULLET_WIDTH, bh = ENEMY_BULLET_HEIGHT; // enlarged for easier detection
+                double bulletX = shooter.getX() + shooter.getWidth()/2 - bw/2.0;
+                double bulletY = shooter.getY() + shooter.getHeight() - 4; // slight overlap
+                // Using color fallback (reddish) in case sprite missing; damage=1. Slightly slower for fairness.
+                enemyBullets.add(new Bullet(bulletX, bulletY, 4.2, false, "mig_shoot", bw, bh, 1, new Color(255,80,80), "enemy_bullet", bulletVolume));
             }
             lastEnemyShot = now;
         }
