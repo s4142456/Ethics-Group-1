@@ -7,6 +7,20 @@ import javax.imageio.ImageIO;
 import javax.sound.sampled.*;
 
 public class AssetManager {
+    /**
+     * Stop all currently playing sound effects (WAVs), except for music.
+     */
+    public void stopAllSounds() {
+        for (Map.Entry<String, Clip> entry : wavSounds.entrySet()) {
+            Clip clip = entry.getValue();
+            if (clip != null && clip.isRunning()) {
+                // Don't stop currentMusic (background music), only SFX
+                if (clip != currentMusic) {
+                    try { clip.stop(); } catch (Exception ignored) {}
+                }
+            }
+        }
+    }
     private static AssetManager instance;
     private Map<String, Image> images;
     private Map<String, Clip> wavSounds;

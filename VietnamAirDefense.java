@@ -329,7 +329,23 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         
     // Start level music (force WAV key)
         String musicKey = levelData.music.endsWith(".wav") ? levelData.music.replace(".wav", "") : levelData.music;
-        AssetManager.getInstance().playMusic(musicKey, true);
+
+        // For level 4, play alarm FIRST, then start music after 5 seconds
+        if (level == 4) {
+            System.out.println("[DEBUG] Stopping ALL music and sounds before alarm");
+            AssetManager.getInstance().stopMusic();
+            AssetManager.getInstance().stopAllSounds(); // You may need to implement this in AssetManager if not present
+            // Play alarm sound at full volume with NO background music interference
+            AssetManager.getInstance().playSound("Alarm");
+            // Start music after 5 seconds when alarm ends
+            new javax.swing.Timer(5000, e -> {
+                AssetManager.getInstance().playMusic(musicKey, true);
+                ((javax.swing.Timer)e.getSource()).stop();
+            }).start();
+        } else {
+            // For other levels, play music normally
+            AssetManager.getInstance().playMusic(musicKey, true);
+        }
 
     // Reset history panel so it will be created on paint for the intro
         historyPanel = null;
@@ -889,12 +905,43 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             return;
         }
         // Start game from menu
-        if (state == GameState.MENU && e.getKeyCode() == KeyEvent.VK_SPACE) {
-            startLevel(1);
-            state = GameState.PLAYING;
-            if (timer != null) timer.start();
-            repaint();
-            return;
+        if (state == GameState.MENU) {
+            if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                startLevel(1);
+                state = GameState.PLAYING;
+                if (timer != null) timer.start();
+                repaint();
+                return;
+            }
+            // Shortcuts: 1-4 to jump to levels 1-4
+            if (e.getKeyCode() == KeyEvent.VK_1) {
+                startLevel(1);
+                state = GameState.PLAYING;
+                if (timer != null) timer.start();
+                repaint();
+                return;
+            }
+            if (e.getKeyCode() == KeyEvent.VK_2) {
+                startLevel(2);
+                state = GameState.PLAYING;
+                if (timer != null) timer.start();
+                repaint();
+                return;
+            }
+            if (e.getKeyCode() == KeyEvent.VK_3) {
+                startLevel(3);
+                state = GameState.PLAYING;
+                if (timer != null) timer.start();
+                repaint();
+                return;
+            }
+            if (e.getKeyCode() == KeyEvent.VK_4) {
+                startLevel(4);
+                state = GameState.PLAYING;
+                if (timer != null) timer.start();
+                repaint();
+                return;
+            }
         }
         // Resume from pause (P or ESC)
         if (state == GameState.PAUSED && (e.getKeyCode() == KeyEvent.VK_P || e.getKeyCode() == KeyEvent.VK_ESCAPE)) {
