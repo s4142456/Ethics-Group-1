@@ -13,6 +13,7 @@ public class Bullet {
     protected int damage = 1;
     protected Color color = Color.WHITE;
     protected boolean isGuided = false;
+    protected String spriteKey = null; // optional sprite for player bullets
     
     public Bullet(double x, double y, double velocityY, boolean isPlayerBullet, String soundEffect, float volume) {
         this.x = x;
@@ -51,6 +52,13 @@ public class Bullet {
         this.isGuided = true;
         AssetManager.getInstance().playSound(soundEffect, volume);
     }
+
+    // New constructor variant that allows providing a sprite key (used for player bullets per level)
+    public Bullet(double x, double y, double velocityY, boolean isPlayerBullet, String soundEffect,
+                  int width, int height, int damage, Color color, String spriteKey, float volume) {
+        this(x, y, velocityY, isPlayerBullet, soundEffect, width, height, damage, color, volume);
+        this.spriteKey = spriteKey;
+    }
     
     public void update() {
         if (isGuided) {
@@ -70,8 +78,17 @@ public class Bullet {
     }
     
     public void draw(Graphics2D g2) {
-    g2.setColor(color != null ? color : (isPlayerBullet ? Color.WHITE : new Color(255, 80, 80)));
-    g2.fillRect((int)x, (int)y, width, height);
+        // If we have a sprite key and image loaded, draw it scaled to bullet size
+        if (spriteKey != null) {
+            Image img = AssetManager.getInstance().getImage(spriteKey);
+            if (img != null) {
+                g2.drawImage(img, (int)x, (int)y, width, height, null);
+                return;
+            }
+        }
+        // Fallback: colored rectangle
+        g2.setColor(color != null ? color : (isPlayerBullet ? Color.WHITE : new Color(255, 80, 80)));
+        g2.fillRect((int)x, (int)y, width, height);
     }
     
     public boolean isPlayerBullet() {

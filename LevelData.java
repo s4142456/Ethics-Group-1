@@ -8,6 +8,7 @@ public class LevelData {
     public final String background;
     public final String music;
     public final String weaponSound;
+    public final String playerBulletSprite; // new: bullet sprite per level
     public final double enemyBaseSpeed;
     public final int[] enemyHealth;
     public final String historicalIntro;
@@ -16,7 +17,7 @@ public class LevelData {
     // class for level data. Including enem health, enemy speed
     public LevelData(int level, String name, String description, String playerSprite,
                     String[] enemySprites, String background, String music, String weaponSound,
-                    double enemyBaseSpeed, int[] enemyHealth, String historicalIntro,
+                    String playerBulletSprite, double enemyBaseSpeed, int[] enemyHealth, String historicalIntro,
                     String historicalSummary) {
         this.level = level;
         this.name = name;
@@ -26,6 +27,7 @@ public class LevelData {
         this.background = background;
         this.music = music;
         this.weaponSound = weaponSound;
+        this.playerBulletSprite = playerBulletSprite;
         this.enemyBaseSpeed = enemyBaseSpeed;
         this.enemyHealth = enemyHealth;
         this.historicalIntro = historicalIntro;
@@ -42,6 +44,7 @@ public class LevelData {
             "bg_level1",
             "bgm_level1",
             "gunfire",
+            "bullet_level1",
             1.0,
             new int[]{1, 2, 2},
             "1954: Battle of Dien Bien Phu - Vietnamese forces use 37mm anti-aircraft guns to deny French air superiority and cut off crucial supply lines.",
@@ -56,6 +59,7 @@ public class LevelData {
             "bg_level2",
             "bgm_level2",
             "sam_launch",
+            "bullet_level2",
             1.3,
             new int[]{2, 3, 2},
             "1965: Operation Rolling Thunder - North Vietnamese air defenses face intense American bombing campaign. SAM sites prove effective against high-flying aircraft.",
@@ -70,6 +74,7 @@ public class LevelData {
             "bg_level3",
             "bgm_level3",
             "mig_shoot",
+            "bullet_level3",
             1.5,
             new int[]{3, 2},
             "1966-1972: Air battles over North Vietnam - Vietnamese MiG-21 pilots engage in dogfights against American F-4 Phantoms and F-105 Thunderchiefs.",
@@ -84,6 +89,7 @@ public class LevelData {
             "bg_level4",
             "bgm_level4",
             "sam_launch",
+            "bullet_level4",
             1.5,
             // need to provide 2 health values for 2 enemy types
             new int[]{6,6},

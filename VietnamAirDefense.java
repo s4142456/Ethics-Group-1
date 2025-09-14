@@ -391,7 +391,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     // Player shooting
         long now = System.currentTimeMillis();
         if (spacePressed && now - lastShotTime > shotCooldown) {
-            playerBullets.add(player.shoot(levelData.weaponSound, bulletVolume));
+            playerBullets.add(player.shoot(levelData.weaponSound, levelData.playerBulletSprite, bulletVolume));
             lastShotTime = now;
         }
         

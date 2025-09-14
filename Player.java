@@ -21,24 +21,36 @@ public class Player extends Aircraft {
         }
     }
 
-    public Bullet shoot(String soundKey, float volume) {
-        double bx = x + w/2 - 2;
-        double by = y - 8;
+    public Bullet shoot(String soundKey, String bulletSpriteKey, float volume) {
+        // Base spawn roughly at center-top of player sprite; adjust for larger bullet sizes below
         if (weaponMode == 1) {
             // 37mm AA gun - balanced stats
-            return new Bullet(bx, by, -10.0, true, soundKey, 4, 10, 1, Color.WHITE, volume);
+            int bw = 10, bh = 24;
+            double bx = x + w/2 - bw/2.0;
+            double by = y - bh + 4; // slight overlap so it appears from barrel
+            return new Bullet(bx, by, -11.0, true, soundKey, bw, bh, 1, Color.WHITE, bulletSpriteKey, volume);
         } else if (weaponMode == 2) {
             // 100mm AA gun - slower but more powerful, shoots upward
-            return new Bullet(bx, by, -8.0, true, soundKey, 5, 12, 2, new Color(255, 200, 0), volume);
+            int bw = 14, bh = 32;
+            double bx = x + w/2 - bw/2.0;
+            double by = y - bh + 6;
+            return new Bullet(bx, by, -9.0, true, soundKey, bw, bh, 2, new Color(255, 200, 0), bulletSpriteKey, volume);
         } else if (weaponMode == 3) {
             // MiG-21 - fast air-to-air missiles
-            return new Bullet(bx, by, -14.0, true, soundKey, 3, 8, 2, Color.CYAN, volume);
+            int bw = 12, bh = 32;
+            double bx = x + w/2 - bw/2.0;
+            double by = y - bh + 6;
+            return new Bullet(bx, by, -16.0, true, soundKey, bw, bh, 2, Color.CYAN, bulletSpriteKey, volume);
         } else {
             // SAM-2 - guided missile, slower but powerful
-            double targetX = x;
-            double targetY = y - 100; // Shoot upward
+            int bw = 16, bh = 40;
+            double bx = x + w/2 - bw/2.0;
+            double by = y - bh + 8;
+            double targetX = x;          // simple upward guidance start
+            double targetY = y - 120;     // further target for initial angle
             double angle = Math.atan2(targetY - y, targetX - x);
-            return new Bullet(bx, by, -6.0, true, soundKey, 6, 14, 3, new Color(200,200,60), angle, volume);
+            Bullet b = new Bullet(bx, by, -7.0, true, soundKey, bw, bh, 3, new Color(200,200,60), angle, volume);
+            return b;
         }
     }
 
