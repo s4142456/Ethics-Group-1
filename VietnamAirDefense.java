@@ -621,7 +621,9 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
                     String dbg = "DEBUG: history state=" + state + " level=" + currentLevel;
                     g2.drawString(dbg, 10, 22);
                     historyPanel.setSize(getWidth(), getHeight());
-                    historyPanel.paint(pg);
+                    // Use printAll to render the HistoryPanel into the offscreen Graphics
+                    // which avoids RepaintManager volatile buffer issues when no Window is present.
+                    historyPanel.printAll(pg);
                     pg.dispose();
                 }
                 case PLAYING -> drawGame(g2);
@@ -736,10 +738,10 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.PLAIN, 18));
-        g2.drawString("• LEFT/RIGHT Arrow Keys: Move aircraft", leftMargin, y); y += 25;
-        g2.drawString("• SPACE Key: Fire weapon", leftMargin, y); y += 25;
-        g2.drawString("• In Level 3: UP/DOWN Arrow Keys: Move aircraft vertically", leftMargin, y); y += 25;
-        g2.drawString("• R Key: Return to menu after defeat or victory", leftMargin, y); y += 40;
+        g2.drawString("\u2022 LEFT/RIGHT Arrow Keys: Move aircraft", leftMargin, y); y += 25;
+        g2.drawString("\u2022 SPACE Key: Fire weapon", leftMargin, y); y += 25;
+        g2.drawString("\u2022 In Level 3: UP/DOWN Arrow Keys: Move aircraft vertically", leftMargin, y); y += 25;
+        g2.drawString("\u2022 R Key: Return to menu after defeat or victory", leftMargin, y); y += 40;
         
         // Game objectives
         g2.setColor(Color.GREEN);
@@ -748,9 +750,9 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.PLAIN, 18));
-        g2.drawString("• Destroy all enemy aircraft in each level", leftMargin, y); y += 25;
-        g2.drawString("• Prevent enemy aircraft from reaching the bottom", leftMargin, y); y += 25;
-        g2.drawString("• Avoid getting hit by enemy fire", leftMargin, y); y += 40;
+        g2.drawString("\u2022 Destroy all enemy aircraft in each level", leftMargin, y); y += 25;
+        g2.drawString("\u2022 Prevent enemy aircraft from reaching the bottom", leftMargin, y); y += 25;
+        g2.drawString("\u2022 Avoid getting hit by enemy fire", leftMargin, y); y += 40;
         
         // Levels info
         g2.setColor(Color.GREEN);
@@ -759,10 +761,10 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.PLAIN, 18));
-        g2.drawString("• Level 1: 1946 - French invasion - Anti-aircraft guns", leftMargin, y); y += 25;
-        g2.drawString("• Level 2: 1965-1968 - US bombing North Vietnam - SAM missiles", leftMargin, y); y += 25;
-        g2.drawString("• Level 3: 1972 - Vietnamese MiG fighters in combat", leftMargin, y); y += 25;
-        g2.drawString("• Level 4: 1972 - Counter-attack, 'Dien Bien Phu in the Air'", leftMargin, y); y += 40;
+        g2.drawString("\u2022 Level 1: 1946 - French invasion - Anti-aircraft guns", leftMargin, y); y += 25;
+        g2.drawString("\u2022 Level 2: 1965-1968 - US bombing North Vietnam - SAM missiles", leftMargin, y); y += 25;
+        g2.drawString("\u2022 Level 3: 1972 - Vietnamese MiG fighters in combat", leftMargin, y); y += 25;
+        g2.drawString("\u2022 Level 4: 1972 - Counter-attack, 'Dien Bien Phu in the Air'", leftMargin, y); y += 40;
         
         // Return instructions
         g2.setColor(Color.YELLOW);
