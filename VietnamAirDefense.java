@@ -201,7 +201,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     private boolean showNextLevelScreen = false;
     private int nextLevelToStart = 0;
     // Volume control for bullet sounds
-    private float bulletVolume = 1.0f; // 0.0 (mute) to 1.0 (max)
+    private float bulletVolume = 0.4f; // 0.0 (mute) to 1.0 (max, reduced default)
     private JSlider volumeSlider;
     private void setupVolumeSlider() {
         if (volumeSlider == null) {
