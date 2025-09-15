@@ -760,9 +760,10 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.PLAIN, 18));
-        g2.drawString("\u2022 LEFT/RIGHT Arrow Keys: Move aircraft", leftMargin, y); y += 25;
-        g2.drawString("\u2022 SPACE Key: Fire weapon", leftMargin, y); y += 25;
-        g2.drawString("\u2022 In Level 3: UP/DOWN Arrow Keys: Move aircraft vertically", leftMargin, y); y += 25;
+        g2.drawString("\u2022 LEFT/RIGHT Arrow Keys: Move ground weapon horizontally", leftMargin, y); y += 25;
+        g2.drawString("\u2022 SPACE Key: Fire weapon. Hold key to fire rapidly", leftMargin, y); y += 25;
+        g2.drawString("\u2022 LEFT/RIGHT/UP/DOWN Arrow Keys (Level 3 Only): Move aircraft directionally", leftMargin, y); y += 25;
+        g2.drawString("\u2022 P Key: Pause / Resume game", leftMargin, y); y += 25;
         g2.drawString("\u2022 R Key: Return to menu after defeat or victory", leftMargin, y); y += 40;
         
         // Game objectives
