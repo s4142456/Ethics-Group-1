@@ -65,7 +65,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     // Enemy bullet visual size constants (tweak here for visibility)
     private static final int ENEMY_BULLET_WIDTH = 16;
     private static final int ENEMY_BULLET_HEIGHT = 40;
-    // Show 'Enemy archive updated!' message
+    // Show 'Enemy index updated' message
     private boolean showArchiveMsg = false;
     private long archiveMsgTime = 0;
     // Track if enemy index overlay is open
@@ -241,7 +241,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     private int currentLevel = 0;
     private LevelData levelData;
     private int score = 0;
-    private int lives = 3;
+    private int lives = 3; // HP
     
     // Game objects
     private Player player;
@@ -307,7 +307,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
            enemyShotCooldown = (long)(900 / levelData.enemyBaseSpeed); 
         }
         
-    // Reset lives at the start of each level
+    // Reset HP at the start of each level
         lives = 2;
         
         // Initialize player with level-specific speed
@@ -501,9 +501,9 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             Bullet bullet = itEB.next();
             if (player.getBounds().intersects(bullet.getBounds())) {
                 itEB.remove();
-                lives--;
+                lives--; // HP--
                 if (lives <= 0) {
-                    gameOver(false);
+                    gameOver(false); // HP depleted
                 }
                 break;
             }
@@ -658,11 +658,11 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
             }
         }
 
-        // Draw 'Enemy archive updated!' message if needed
+    // Draw 'Enemy index updated' message if needed
         if (showArchiveMsg) {
             long now = System.currentTimeMillis();
             if (now - archiveMsgTime < 2000) {
-                String msg = "Enemy archive updated!";
+                String msg = "Enemy index updated";
                 g2.setFont(new Font("Arial", Font.BOLD, 28));
                 g2.setColor(Color.ORANGE);
                 int msgX = (WIDTH - g2.getFontMetrics().stringWidth(msg)) / 2;
@@ -848,7 +848,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.BOLD, 20));
         g2.drawString("Score: " + score, 20, 30);
-        g2.drawString("Lives: " + lives, WIDTH - 100, 30);
+    g2.drawString("HP: " + lives, WIDTH - 100, 30);
         g2.drawString("Level " + currentLevel, WIDTH/2 - 40, 30);
     }
     

@@ -38,9 +38,9 @@ Welcome to "Vietnam Air Defense", a game that recreates the history of Vietnam's
 - **Enemies**: B-52 and strategic bombers
 - **Features**: Enemies with higher power and durability
 
-## Scoring and Lives System
+## Scoring and HP System
 - Destroying each aircraft: +100 points
-- Each level starts with 2 lives
+- Each level starts with 2 HP
 - Your aircraft hit by enemy fire: -1 life
 
 ## History and Context
