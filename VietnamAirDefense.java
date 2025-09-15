@@ -284,6 +284,11 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     currentLevel = level;
     levelData = LevelData.LEVELS[level - 1];
     showLevelIntro(level);
+    
+    // Reset score when starting level 1 (new game)
+    if (level == 1) {
+        score = 0;
+    }
 
     // Enemy fire rate per level. Only faster shooting for level 4
         if (level == 4) {
