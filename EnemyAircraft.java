@@ -3,7 +3,7 @@
 import java.awt.*;
 import java.util.Random;
 
-enum MovementPattern { HORIZONTAL, SINE, ZIGZAG, RANDOM, DIVE, SWOOP, FLANK, CIRCLE, WAVE, STALK, AMBUSH, SNAKE_DOWN_RIGHT, SNAKE_DOWN_LEFT }
+enum MovementPattern { HORIZONTAL, HORIZONTAL_DRIFT_DOWN, SINE, ZIGZAG, RANDOM, DIVE, SWOOP, FLANK, CIRCLE, WAVE, STALK, AMBUSH, SNAKE_DOWN_RIGHT, SNAKE_DOWN_LEFT }
 
 public class EnemyAircraft extends Aircraft {
     private double baseSpeed;
@@ -14,6 +14,13 @@ public class EnemyAircraft extends Aircraft {
     private double t = 0; // time accumulator for patterns
     private Random rnd = new Random();
     private double diveTargetY = -1;
+    // Per-enemy drift/jitter used by HORIZONTAL_DRIFT_DOWN to avoid tailing
+    private double driftDownFactor = 0.0; // fraction of speed applied to vertical drift
+    private double jitterAmp = 0.0;       // horizontal jitter amplitude
+    private double jitterFreq = 1.0;      // horizontal jitter frequency multiplier
+    private double phase = 0.0;           // per-enemy phase offset
+    // Cooldown frames after bouncing off a wall to avoid repeated flips and sticking
+    private int edgeCooldown = 0;
     
     public EnemyAircraft(double x, double y, String spriteKey, int hp, double baseSpeed) {
         this(x, y, spriteKey, hp, baseSpeed, MovementPattern.HORIZONTAL);
@@ -26,11 +33,23 @@ public class EnemyAircraft extends Aircraft {
         this.formationY = (int)y;
         this.maxHp = hp;
         this.pattern = pattern;
+        // Initialize per-enemy randomness to reduce synchronized motion
+        if (pattern == MovementPattern.HORIZONTAL_DRIFT_DOWN) {
+            // Randomize initial horizontal direction a bit so rows split
+            this.moveDir = rnd.nextBoolean() ? 1 : -1;
+            // Vertical drift: slow descent so enemies spend more time moving horizontally
+            this.driftDownFactor = 0.03 + rnd.nextDouble() * 0.02; // ~0.03–0.05 of speed per tick
+            // Small horizontal jitter so paths don't overlap exactly
+            this.jitterAmp = 0.6 + rnd.nextDouble() * 0.8;   // 0.6–1.4 px per frame sin component
+            this.jitterFreq = 0.6 + rnd.nextDouble() * 0.9;  // vary frequency
+            this.phase = rnd.nextDouble() * Math.PI * 2.0;
+        }
     }
     
     public void updateFormation(double screenWidth, double screenHeight, Player player) {
         // time advance
         t += 0.1 * speed;
+        if (edgeCooldown > 0) edgeCooldown--;
 
         switch (pattern) {
             case HORIZONTAL -> {
@@ -38,6 +57,34 @@ public class EnemyAircraft extends Aircraft {
                 if (x <= 20 || x + w >= screenWidth - 20) {
                     moveDir *= -1;
                     y += 20;
+                }
+            }
+            case HORIZONTAL_DRIFT_DOWN -> {
+                // Smooth horizontal bounce with continuous downward drift and slight per-enemy jitter
+                // Reduce jitter influence near edges to prevent sticking
+                double leftBound = 20;
+                double rightBound = screenWidth - 20;
+                double leftDist = Math.max(0, x - leftBound);
+                double rightDist = Math.max(0, rightBound - (x + w));
+                double edgeDist = Math.min(leftDist, rightDist);
+                double jitterScale = edgeDist < 30 ? Math.max(0.25, edgeDist / 30.0) : 1.0;
+                double jitter = Math.sin(t * jitterFreq + phase) * (jitterAmp * jitterScale);
+
+                x += moveDir * speed + jitter;
+                y += speed * (driftDownFactor > 0 ? driftDownFactor : 0.2);
+
+                // Bounce with small push inside and cooldown to avoid flipping every frame
+                if (edgeCooldown == 0 && (x <= leftBound || x + w >= rightBound)) {
+                    moveDir *= -1;
+                    if (x <= leftBound) {
+                        x = leftBound + 1; // nudge inside
+                        moveDir = 1;
+                    } else if (x + w >= rightBound) {
+                        x = rightBound - w - 1; // nudge inside
+                        moveDir = -1;
+                    }
+                    phase += Math.PI * 0.5; // change jitter phase to break resonance at wall
+                    edgeCooldown = 8; // small cooldown
                 }
             }
             case SINE -> {

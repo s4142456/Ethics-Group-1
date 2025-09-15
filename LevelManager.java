@@ -32,9 +32,8 @@ public class LevelManager {
                 // choose movement pattern based on level and row
                 MovementPattern pattern = MovementPattern.HORIZONTAL;
                 if (level.level == 1) {
-                    // simpler for level 1
-                    // pattern = MovementPattern.SNAKE_DOWN;
-                    pattern = MovementPattern.HORIZONTAL;
+                    // Level 1: smooth horizontal bounce with continuous downward drift (no step-down tailing)
+                    pattern = MovementPattern.HORIZONTAL_DRIFT_DOWN;
                 } else if (level.level == 2) {
                     pattern = (row % 2 == 0) ? MovementPattern.SINE : MovementPattern.ZIGZAG;
                 } else if (level.level == 3) {
