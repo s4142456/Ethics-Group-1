@@ -200,17 +200,25 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     // Next level screen state
     private boolean showNextLevelScreen = false;
     private int nextLevelToStart = 0;
-    // Volume control for bullet sounds
-    private float bulletVolume = 1.0f; // 0.0 (mute) to 1.0 (max)
+    // Volume control for bullet sounds and music
+    private float bulletVolume = 1.0f; // 0.5 (min) to 1.0 (max)
+    private float musicVolume = 1.0f;  // 0.5 (min) to 1.0 (max)
     private JSlider volumeSlider;
     private void setupVolumeSlider() {
         if (volumeSlider == null) {
-            volumeSlider = new JSlider(0, 100, (int)(bulletVolume * 100));
+            // Only allow values from 50 to 100 (0.5f to 1.0f)
+            volumeSlider = new JSlider(50, 100, (int)(bulletVolume * 100));
             volumeSlider.setBounds(WIDTH/2 - 100, HEIGHT/2 + 30, 200, 40);
             volumeSlider.addChangeListener(new ChangeListener() {
                 @Override
                 public void stateChanged(ChangeEvent e) {
-                    bulletVolume = volumeSlider.getValue() / 100f;
+                    float sliderValue = volumeSlider.getValue() / 100f;
+                    // Clamp to [0.5, 1.0]
+                    if (sliderValue < 0.5f) sliderValue = 0.5f;
+                    bulletVolume = sliderValue;
+                    musicVolume = sliderValue;
+                    // Set music volume immediately
+                    AssetManager.getInstance().setMusicVolume(musicVolume);
                 }
             });
             volumeSlider.setFocusable(false);
@@ -343,17 +351,19 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         if (level == 4) {
             System.out.println("[DEBUG] Stopping ALL music and sounds before alarm");
             AssetManager.getInstance().stopMusic();
-            AssetManager.getInstance().stopAllSounds(); // You may need to implement this in AssetManager if not present
+            AssetManager.getInstance().stopAllSounds();
             // Play alarm sound at full volume with NO background music interference
             AssetManager.getInstance().playSound("Alarm");
             // Start music after 5 seconds when alarm ends
             new javax.swing.Timer(5000, e -> {
                 AssetManager.getInstance().playMusic(musicKey, true);
+                AssetManager.getInstance().setMusicVolume(musicVolume);
                 ((javax.swing.Timer)e.getSource()).stop();
             }).start();
         } else {
             // For other levels, play music normally
             AssetManager.getInstance().playMusic(musicKey, true);
+            AssetManager.getInstance().setMusicVolume(musicVolume);
         }
 
     // Reset history panel so it will be created on paint for the intro

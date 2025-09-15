@@ -8,6 +8,20 @@ import javax.sound.sampled.*;
 
 public class AssetManager {
     /**
+     * Set the volume for background music (currentMusic). Volume should be in [0.5, 1.0].
+     */
+    public void setMusicVolume(float volume) {
+        if (currentMusic != null) {
+            try {
+                FloatControl gainControl = (FloatControl) currentMusic.getControl(FloatControl.Type.MASTER_GAIN);
+                float min = gainControl.getMinimum();
+                float max = gainControl.getMaximum();
+                float gain = min + (max - min) * volume;
+                gainControl.setValue(gain);
+            } catch (Exception ignored) {}
+        }
+    }
+    /**
      * Stop all currently playing sound effects (WAVs), except for music.
      */
     public void stopAllSounds() {
