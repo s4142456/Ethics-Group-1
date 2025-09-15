@@ -19,6 +19,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
+import java.awt.event.MouseWheelListener;
+import java.awt.event.MouseWheelEvent;
+import java.awt.Shape;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.SwingUtilities;
@@ -61,7 +64,7 @@ public class VietnamAirDefense extends JFrame {
     }
 }
 
-class GamePanel extends JPanel implements ActionListener, KeyListener {
+class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWheelListener {
     // Enemy bullet visual size constants (tweak here for visibility)
     private static final int ENEMY_BULLET_WIDTH = 16;
     private static final int ENEMY_BULLET_HEIGHT = 40;
@@ -274,12 +277,18 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
     // Game loop
     private Timer timer;
     private static final int FPS = 60;
+    // Instructions scrolling
+    private int instructionsScrollOffset = 0; // current vertical scroll in pixels
+    private int instructionsContentHeight = 0; // total height of scrollable instructions content
+    private static final int INSTRUCTIONS_TOP_MARGIN = 145; // space reserved for title/disclaimer (adjusted to avoid overlap)
+    private static final int INSTRUCTIONS_BOTTOM_MARGIN = 100; // space above footer message
     
     public GamePanel() {
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setBackground(Color.BLACK);
         setFocusable(true);
         addKeyListener(this);
+        addMouseWheelListener(this);
     }
     
     public void start() {
@@ -720,19 +729,19 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         volumeSlider.setBounds(WIDTH/2 - 100, menuY + 185, 200, 40);
         setupVolumeSlider();
 
-    // Draw 'Press E for Enemy Index' prompt below the volume bar
-    g2.setFont(new Font("Arial", Font.PLAIN, 16));
-    String eMsg = "Press E for Enemy Index";
-    int eMsgX = (WIDTH - g2.getFontMetrics().stringWidth(eMsg)) / 2;
-    g2.setColor(Color.CYAN);
-    g2.drawString(eMsg, eMsgX, menuY + 245);
-    }
+        // Draw 'Press E for Enemy Index' prompt below the volume bar
+        g2.setFont(new Font("Arial", Font.PLAIN, 16));
+        String eMsg = "Press E for Enemy Index";
+        int eMsgX = (WIDTH - g2.getFontMetrics().stringWidth(eMsg)) / 2;
+        g2.setColor(Color.CYAN);
+        g2.drawString(eMsg, eMsgX, menuY + 245);
+        }
     
-    private void drawInstructions(Graphics2D g2) {
-        // Draw a dark semi-transparent background
+        private void drawInstructions(Graphics2D g2) {
+        // Background
         g2.setColor(new Color(0, 0, 0, 220));
         g2.fillRect(0, 0, WIDTH, HEIGHT);
-        
+
         // Title
         g2.setColor(Color.YELLOW);
         g2.setFont(new Font("Arial", Font.BOLD, 32));
@@ -746,17 +755,25 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         String disclaimer = "This game is only a simulation based on historical events";
         int disclaimerWidth = g2.getFontMetrics().stringWidth(disclaimer);
         g2.drawString(disclaimer, (WIDTH - disclaimerWidth) / 2, 110);
-        
-        // Draw instructions with appropriate spacing
-        g2.setColor(Color.WHITE);
-        g2.setFont(new Font("Arial", Font.BOLD, 20));
-        
-        // Controls section
-        int y = 145; // Adjusted to account for the disclaimer
+
+        // Determine visible region and clamp BEFORE using offset
+        int visibleHeight = HEIGHT - INSTRUCTIONS_TOP_MARGIN - INSTRUCTIONS_BOTTOM_MARGIN;
+        int maxOffsetPre = Math.max(0, instructionsContentHeight - visibleHeight);
+        if (instructionsScrollOffset < 0) instructionsScrollOffset = 0;
+        if (instructionsScrollOffset > maxOffsetPre) instructionsScrollOffset = maxOffsetPre;
+
+        // Scrollable content origin
         int leftMargin = 80;
+        int y = INSTRUCTIONS_TOP_MARGIN - instructionsScrollOffset; // first scrollable line
+
+        // Clip scrolling area so content never overlaps header/footer
+        Shape oldClip = g2.getClip();
+        g2.setClip(0, INSTRUCTIONS_TOP_MARGIN - 25, WIDTH, visibleHeight + 50); // slight padding
+
+        // Controls section
+        g2.setFont(new Font("Arial", Font.BOLD, 20));
         g2.setColor(Color.GREEN);
-        g2.drawString("Controls:", leftMargin, y);
-        y += 30;
+        g2.drawString("Controls:", leftMargin, y); y += 30;
         
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.PLAIN, 18));
@@ -770,7 +787,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.setColor(Color.GREEN);
         g2.setFont(new Font("Arial", Font.BOLD, 20));
         g2.drawString("Objectives:", leftMargin, y); y += 30;
-        
+
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.PLAIN, 18));
         g2.drawString("\u2022 Destroy all enemy aircraft in each level", leftMargin, y); y += 25;
@@ -781,7 +798,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.setColor(Color.GREEN);
         g2.setFont(new Font("Arial", Font.BOLD, 20));
         g2.drawString("Levels:", leftMargin, y); y += 30;
-        
+
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.PLAIN, 18));
         g2.drawString("\u2022 Level 1: 1946 - French invasion - Anti-aircraft guns", leftMargin, y); y += 25;
@@ -789,12 +806,49 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.drawString("\u2022 Level 3: 1972 - Vietnamese MiG fighters in combat", leftMargin, y); y += 25;
         g2.drawString("\u2022 Level 4: 1972 - Counter-attack, 'Dien Bien Phu in the Air'", leftMargin, y); y += 40;
         
+        // Health info
+        g2.setColor(Color.GREEN);
+        g2.setFont(new Font("Arial", Font.BOLD, 20));
+        g2.drawString("Health:", leftMargin, y); y += 30;
+
+        g2.setColor(Color.WHITE);
+        g2.setFont(new Font("Arial", Font.PLAIN, 18));
+        g2.drawString("\u2022 You start each level with 2 health points (lives)", leftMargin, y); y += 25;
+        g2.drawString("\u2022 Losing all health ends the level (defeat)", leftMargin, y); y += 25;
+        y += 10; // small bottom padding
+
+        // Update total content height (only if greater to reduce jitter during first frames)
+        instructionsContentHeight = Math.max(instructionsContentHeight, y - (INSTRUCTIONS_TOP_MARGIN - instructionsScrollOffset));
+
+        // Clamp scroll offset after recalculating content height
+        // Restore clip
+        g2.setClip(oldClip);
+        visibleHeight = HEIGHT - INSTRUCTIONS_TOP_MARGIN - INSTRUCTIONS_BOTTOM_MARGIN; // recompute (same value) for scrollbar section
+        int maxOffset = Math.max(0, instructionsContentHeight - visibleHeight);
+        if (instructionsScrollOffset > maxOffset) instructionsScrollOffset = maxOffset;
+        if (instructionsScrollOffset < 0) instructionsScrollOffset = 0;
+
         // Return instructions
         g2.setColor(Color.YELLOW);
         g2.setFont(new Font("Arial", Font.BOLD, 20));
-        String backMsg = "Press ESC to return to menu";
+        String backMsg = "Press I or ESC: Return to menu | Scroll: Mouse Wheel / Up/Down Arrow Keys";
         int backWidth = g2.getFontMetrics().stringWidth(backMsg);
-        g2.drawString(backMsg, (WIDTH - backWidth) / 2, HEIGHT - 40);
+        g2.drawString(backMsg, (WIDTH - backWidth) / 2, HEIGHT - 50);
+
+        // Scrollbar (right side)
+        if (maxOffset > 0) {
+            int trackX = WIDTH - 24;
+            int trackY = INSTRUCTIONS_TOP_MARGIN;
+            int trackW = 8;
+            int trackH = visibleHeight;
+            g2.setColor(new Color(80, 80, 80, 180));
+            g2.fillRoundRect(trackX, trackY, trackW, trackH, 8, 8);
+            double ratio = visibleHeight / (double) instructionsContentHeight;
+            int thumbH = Math.max(30, (int) (trackH * ratio));
+            int thumbY = trackY + (int) ((trackH - thumbH) * (instructionsScrollOffset / (double) maxOffset));
+            g2.setColor(new Color(200, 200, 200, 220));
+            g2.fillRoundRect(trackX, thumbY, trackW, thumbH, 8, 8);
+        }
     }
     
     private void drawGame(Graphics2D g2) {
@@ -849,7 +903,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.BOLD, 20));
         g2.drawString("Score: " + score, 20, 30);
-    g2.drawString("HP: " + lives, WIDTH - 100, 30);
+        g2.drawString("HP: " + lives, WIDTH - 100, 30);
         g2.drawString("Level " + currentLevel, WIDTH/2 - 40, 30);
     }
     
@@ -1006,8 +1060,27 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
         // Menu: I for instructions
         if (state == GameState.MENU && e.getKeyCode() == KeyEvent.VK_I) {
             state = GameState.INSTRUCTIONS;
+            instructionsScrollOffset = 0; // reset scroll when opening
             repaint();
             return;
+        }
+        // Scroll instructions with arrow keys / page keys
+        if (state == GameState.INSTRUCTIONS) {
+            int scrollStep = 40;
+            int pageStep = HEIGHT - 200;
+            int visibleHeight = HEIGHT - INSTRUCTIONS_TOP_MARGIN - INSTRUCTIONS_BOTTOM_MARGIN;
+            int maxOffset = Math.max(0, instructionsContentHeight - visibleHeight);
+            switch (e.getKeyCode()) {
+                case KeyEvent.VK_UP -> { instructionsScrollOffset -= scrollStep; }
+                case KeyEvent.VK_DOWN -> { instructionsScrollOffset += scrollStep; }
+                case KeyEvent.VK_PAGE_UP -> { instructionsScrollOffset -= pageStep; }
+                case KeyEvent.VK_PAGE_DOWN -> { instructionsScrollOffset += pageStep; }
+                case KeyEvent.VK_HOME -> { instructionsScrollOffset = 0; }
+                case KeyEvent.VK_END -> { instructionsScrollOffset = maxOffset; }
+            }
+            if (instructionsScrollOffset < 0) instructionsScrollOffset = 0;
+            if (instructionsScrollOffset > maxOffset) instructionsScrollOffset = maxOffset;
+            repaint();
         }
         // Pause game with P
         if (state == GameState.PLAYING && e.getKeyCode() == KeyEvent.VK_P) {
@@ -1115,4 +1188,17 @@ class GamePanel extends JPanel implements ActionListener, KeyListener {
 
     @Override
     public void keyTyped(KeyEvent e) {}
+
+    // Mouse wheel scroll for instructions
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent e) {
+        if (state == GameState.INSTRUCTIONS) {
+            int visibleHeight = HEIGHT - INSTRUCTIONS_TOP_MARGIN - INSTRUCTIONS_BOTTOM_MARGIN;
+            int maxOffset = Math.max(0, instructionsContentHeight - visibleHeight);
+            instructionsScrollOffset += e.getWheelRotation() * 40; // 40px per notch
+            if (instructionsScrollOffset < 0) instructionsScrollOffset = 0;
+            if (instructionsScrollOffset > maxOffset) instructionsScrollOffset = maxOffset;
+            repaint();
+        }
+    }
 }
