@@ -806,8 +806,8 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         g2.setColor(Color.WHITE);
         g2.setFont(new Font("Arial", Font.PLAIN, 18));
         g2.drawString("\u2022 LEFT/RIGHT Arrow Keys: Move ground weapon horizontally", leftMargin, y); y += 25;
-        g2.drawString("\u2022 SPACE Key: Fire weapon. Hold key to fire rapidly", leftMargin, y); y += 25;
         g2.drawString("\u2022 LEFT/RIGHT/UP/DOWN Arrow Keys (Level 3 Only): Move aircraft directionally", leftMargin, y); y += 25;
+        g2.drawString("\u2022 SPACE Key: Fire weapon. Hold key to fire rapidly", leftMargin, y); y += 25;
         g2.drawString("\u2022 P Key: Pause / Resume game", leftMargin, y); y += 25;
         g2.drawString("\u2022 O Key: Restart current level", leftMargin, y); y += 25;
         g2.drawString("\u2022 R Key: Return to menu after defeat or victory", leftMargin, y); y += 40;
@@ -845,7 +845,6 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         g2.drawString("\u2022 You start each level with 2 health points (lives)", leftMargin, y); y += 25;
         g2.drawString("\u2022 Losing all health ends the level (defeat)", leftMargin, y); y += 25;
         y += 10; // small bottom padding
-
         // Update total content height (only if greater to reduce jitter during first frames)
         instructionsContentHeight = Math.max(instructionsContentHeight, y - (INSTRUCTIONS_TOP_MARGIN - instructionsScrollOffset));
 
@@ -860,9 +859,13 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         // Return instructions
         g2.setColor(Color.YELLOW);
         g2.setFont(new Font("Arial", Font.BOLD, 20));
-        String backMsg = "Press I or ESC: Return to menu | Scroll: Mouse Wheel / Up/Down Arrow Keys";
-        int backWidth = g2.getFontMetrics().stringWidth(backMsg);
-        g2.drawString(backMsg, (WIDTH - backWidth) / 2, HEIGHT - 50);
+        String backLine1 = "Press I or ESC: Return to menu";
+        String backLine2 = "Scroll: Mouse Wheel or Up/Down Arrow Keys";
+        int back1Width = g2.getFontMetrics().stringWidth(backLine1);
+        int back2Width = g2.getFontMetrics().stringWidth(backLine2);
+        int baseY = HEIGHT - 50; // first line a bit higher to fit second line
+        g2.drawString(backLine1, (WIDTH - back1Width) / 2, baseY);
+        g2.drawString(backLine2, (WIDTH - back2Width) / 2, baseY + 25);
 
         // Scrollbar (right side)
         if (maxOffset > 0) {
