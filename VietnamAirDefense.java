@@ -394,7 +394,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         showNextLevelScreen = false;
         showEnemyIndex = false;
         hideVolumeSlider();
-        destroyedTypes.clear(); // restart should clear discovered enemy index (adjust if you prefer keeping it)
+        // Do NOT clear destroyedTypes on restart; keep enemy index progress for this session
         state = GameState.PLAYING;
         if (timer != null) timer.start();
         repaint();
@@ -1025,6 +1025,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
             if (e.getKeyCode() == KeyEvent.VK_SPACE) {
                 // Starting a new session from the menu always resets score
                 score = 0;
+                destroyedTypes.clear(); // new session: reset enemy index
                 startLevel(1);
                 state = GameState.PLAYING;
                 if (timer != null) timer.start();
@@ -1034,6 +1035,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
             // Shortcuts: 1-4 to jump to levels 1-4
             if (e.getKeyCode() == KeyEvent.VK_1) {
                 score = 0; // New session via level shortcut
+                destroyedTypes.clear(); // new session: reset enemy index
                 startLevel(1);
                 state = GameState.PLAYING;
                 if (timer != null) timer.start();
@@ -1042,6 +1044,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
             }
             if (e.getKeyCode() == KeyEvent.VK_2) {
                 score = 0; // New session via level shortcut
+                destroyedTypes.clear(); // new session: reset enemy index
                 startLevel(2);
                 state = GameState.PLAYING;
                 if (timer != null) timer.start();
@@ -1050,6 +1053,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
             }
             if (e.getKeyCode() == KeyEvent.VK_3) {
                 score = 0; // New session via level shortcut
+                destroyedTypes.clear(); // new session: reset enemy index
                 startLevel(3);
                 state = GameState.PLAYING;
                 if (timer != null) timer.start();
@@ -1058,6 +1062,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
             }
             if (e.getKeyCode() == KeyEvent.VK_4) {
                 score = 0; // New session via level shortcut
+                destroyedTypes.clear(); // new session: reset enemy index
                 startLevel(4);
                 state = GameState.PLAYING;
                 if (timer != null) timer.start();
