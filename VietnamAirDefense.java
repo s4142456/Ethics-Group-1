@@ -244,6 +244,8 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
     private int currentLevel = 0;
     private LevelData levelData;
     private int score = 0;
+    // Score snapshot at the start of the current level (for restart preservation)
+    private int levelStartScore = 0;
     private int lives = 3; // HP
     
     // Game objects
@@ -302,10 +304,11 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
     levelData = LevelData.LEVELS[level - 1];
     showLevelIntro(level);
     
-    // Reset score when starting level 1 (new game)
+    // If this is level 1 (new game) reset score and snapshot; for other levels snapshot current score
     if (level == 1) {
         score = 0;
     }
+    levelStartScore = score; // remember baseline for restarts of this level
 
     // Enemy fire rate per level. Only faster shooting for level 4
         if (level == 4) {
@@ -377,6 +380,24 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
 
     // Reset history panel so it will be created on paint for the intro
         historyPanel = null;
+    }
+    // Restart the current level without altering overall score (optional: keep score) but reset level-specific progress
+    private void restartLevel() {
+        if (currentLevel <= 0 || currentLevel > LevelData.LEVELS.length) return;
+        // Restore score to baseline for this level (removes points gained on failed attempt)
+        score = levelStartScore;
+        int lvl = currentLevel;
+        // Reinitialize level fresh (this will set levelStartScore again to score baseline)
+        startLevel(lvl);
+        // Skip intro on restart
+        showLevelIntro = false;
+        showNextLevelScreen = false;
+        showEnemyIndex = false;
+        hideVolumeSlider();
+        destroyedTypes.clear(); // restart should clear discovered enemy index (adjust if you prefer keeping it)
+        state = GameState.PLAYING;
+        if (timer != null) timer.start();
+        repaint();
     }
     
     @Override
@@ -691,8 +712,8 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         g2.fillRect(0, 0, WIDTH, HEIGHT);
 
         // Draw pause menu box
-        int menuWidth = 340;
-        int menuHeight = 260;
+        int menuWidth = 360;
+        int menuHeight = 310; // increased to make room for restart + index lines below slider
         int menuX = (WIDTH - menuWidth) / 2;
         int menuY = (HEIGHT - menuHeight) / 2;
         g2.setColor(new Color(40, 40, 40, 240));
@@ -726,15 +747,22 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
 
         // Position and show the volume slider below the label
         if (volumeSlider == null) setupVolumeSlider();
-        volumeSlider.setBounds(WIDTH/2 - 100, menuY + 185, 200, 40);
+        // Place slider slightly lower to free vertical space
+        volumeSlider.setBounds(WIDTH/2 - 110, menuY + 190, 220, 38);
         setupVolumeSlider();
 
-        // Draw 'Press E for Enemy Index' prompt below the volume bar
+        // Restart (above enemy index)
         g2.setFont(new Font("Arial", Font.PLAIN, 16));
+        String rMsg = "Press O to Restart Level";
+        int rMsgX = (WIDTH - g2.getFontMetrics().stringWidth(rMsg)) / 2;
+        g2.setColor(Color.ORANGE);
+        g2.drawString(rMsg, rMsgX, menuY + 245);
+
+        // Draw 'Press E for Enemy Index' prompt below restart line
         String eMsg = "Press E for Enemy Index";
         int eMsgX = (WIDTH - g2.getFontMetrics().stringWidth(eMsg)) / 2;
         g2.setColor(Color.CYAN);
-        g2.drawString(eMsg, eMsgX, menuY + 245);
+        g2.drawString(eMsg, eMsgX, menuY + 270);
         }
     
         private void drawInstructions(Graphics2D g2) {
@@ -781,6 +809,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         g2.drawString("\u2022 SPACE Key: Fire weapon. Hold key to fire rapidly", leftMargin, y); y += 25;
         g2.drawString("\u2022 LEFT/RIGHT/UP/DOWN Arrow Keys (Level 3 Only): Move aircraft directionally", leftMargin, y); y += 25;
         g2.drawString("\u2022 P Key: Pause / Resume game", leftMargin, y); y += 25;
+        g2.drawString("\u2022 O Key: Restart current level", leftMargin, y); y += 25;
         g2.drawString("\u2022 R Key: Return to menu after defeat or victory", leftMargin, y); y += 40;
         
         // Game objectives
@@ -923,6 +952,10 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         text = "Press R to Return to Menu";
         x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
         g2.drawString(text, x, HEIGHT/2 + 100);
+        g2.setFont(new Font("Arial", Font.PLAIN, 18));
+        String retry = "Press O to Retry Level";
+        int rx = (WIDTH - g2.getFontMetrics().stringWidth(retry)) / 2;
+        g2.drawString(retry, rx, HEIGHT/2 + 140);
     }
     
     private void drawVictory(Graphics2D g2) {
@@ -941,6 +974,10 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         text = "Press R to Return to Menu";
         x = (WIDTH - g2.getFontMetrics().stringWidth(text)) / 2;
         g2.drawString(text, x, HEIGHT/2 + 100);
+        g2.setFont(new Font("Arial", Font.PLAIN, 18));
+        String replay = "Press O to Replay Level";
+        int rx = (WIDTH - g2.getFontMetrics().stringWidth(replay)) / 2;
+        g2.drawString(replay, rx, HEIGHT/2 + 140);
     }
     
     @Override
@@ -986,6 +1023,8 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         // Start game from menu
         if (state == GameState.MENU) {
             if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+                // Starting a new session from the menu always resets score
+                score = 0;
                 startLevel(1);
                 state = GameState.PLAYING;
                 if (timer != null) timer.start();
@@ -994,6 +1033,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
             }
             // Shortcuts: 1-4 to jump to levels 1-4
             if (e.getKeyCode() == KeyEvent.VK_1) {
+                score = 0; // New session via level shortcut
                 startLevel(1);
                 state = GameState.PLAYING;
                 if (timer != null) timer.start();
@@ -1001,6 +1041,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
                 return;
             }
             if (e.getKeyCode() == KeyEvent.VK_2) {
+                score = 0; // New session via level shortcut
                 startLevel(2);
                 state = GameState.PLAYING;
                 if (timer != null) timer.start();
@@ -1008,6 +1049,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
                 return;
             }
             if (e.getKeyCode() == KeyEvent.VK_3) {
+                score = 0; // New session via level shortcut
                 startLevel(3);
                 state = GameState.PLAYING;
                 if (timer != null) timer.start();
@@ -1015,6 +1057,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
                 return;
             }
             if (e.getKeyCode() == KeyEvent.VK_4) {
+                score = 0; // New session via level shortcut
                 startLevel(4);
                 state = GameState.PLAYING;
                 if (timer != null) timer.start();
@@ -1043,6 +1086,11 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         if ((state == GameState.GAME_OVER || state == GameState.VICTORY) && e.getKeyCode() == KeyEvent.VK_R) {
             state = GameState.MENU;
             repaint();
+            return;
+        }
+        // Retry same level from GAME_OVER or VICTORY with O
+        if ((state == GameState.GAME_OVER || state == GameState.VICTORY) && e.getKeyCode() == KeyEvent.VK_O) {
+            restartLevel();
             return;
         }
         // Instructions screen: ESC to return to menu
@@ -1088,6 +1136,11 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
             setupVolumeSlider();
             if (timer != null) timer.stop();
             repaint();
+            return;
+        }
+        // Restart current level with O key while playing or paused (resume into playing)
+        if ((state == GameState.PLAYING || state == GameState.PAUSED) && e.getKeyCode() == KeyEvent.VK_O) {
+            restartLevel();
             return;
         }
         // Movement and shooting keys
