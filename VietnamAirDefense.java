@@ -670,7 +670,20 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
 
         double scaleX = (double) getWidth() / WIDTH;
         double scaleY = (double) getHeight() / HEIGHT;
-        g2.scale(scaleX, scaleY);
+        double scale = Math.min(scaleX, scaleY);
+        
+        int gameWidth = (int) (WIDTH * scale);
+        int gameHeight = (int) (HEIGHT * scale);
+        
+        int x = (getWidth() - gameWidth) / 2;
+        int y = (getHeight() - gameHeight) / 2;
+        
+        g2.translate(x, y);
+        g2.scale(scale, scale);
+
+        // Clear the background with black for letterboxing
+        g.setColor(Color.BLACK);
+        g.fillRect(0, 0, getWidth(), getHeight());
 
         // Show enemy index overlay above all if active
         if (showEnemyIndex) {
