@@ -32,13 +32,15 @@ public class VietnamAirDefense extends JFrame {
     private static final String GAME_TITLE = "Vietnam Air Defense (1946-1972)";
     private GamePanel gamePanel;
     
+    private boolean isFullScreen = false;
+
     public VietnamAirDefense() {
         // JavaFX check removed; background music is disabled in this build.
         setTitle(GAME_TITLE);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setResizable(false);
         
-        gamePanel = new GamePanel();
+        gamePanel = new GamePanel(this);
         add(gamePanel);
         pack();
         setLocationRelativeTo(null);
@@ -53,6 +55,20 @@ public class VietnamAirDefense extends JFrame {
                 AssetManager.getInstance().cleanup();
             }
         });
+    }
+
+    public void toggleFullScreen() {
+        isFullScreen = !isFullScreen;
+        dispose();
+        setUndecorated(isFullScreen);
+        if (isFullScreen) {
+            getGraphicsConfiguration().getDevice().setFullScreenWindow(this);
+        } else {
+            getGraphicsConfiguration().getDevice().setFullScreenWindow(null);
+            setSize(new Dimension(800, 600));
+            setLocationRelativeTo(null);
+        }
+        setVisible(true);
     }
     
     public static void main(String[] args) {
@@ -284,8 +300,10 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
     private int instructionsContentHeight = 0; // total height of scrollable instructions content
     private static final int INSTRUCTIONS_TOP_MARGIN = 145; // space reserved for title/disclaimer (adjusted to avoid overlap)
     private static final int INSTRUCTIONS_BOTTOM_MARGIN = 100; // space above footer message
+    private VietnamAirDefense gameFrame;
     
-    public GamePanel() {
+    public GamePanel(VietnamAirDefense frame) {
+        this.gameFrame = frame;
         setPreferredSize(new Dimension(WIDTH, HEIGHT));
         setBackground(Color.BLACK);
         setFocusable(true);
@@ -649,6 +667,10 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         super.paintComponent(g);
         Graphics2D g2 = (Graphics2D) g.create();
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+        double scaleX = (double) getWidth() / WIDTH;
+        double scaleY = (double) getHeight() / HEIGHT;
+        g2.scale(scaleX, scaleY);
 
         // Show enemy index overlay above all if active
         if (showEnemyIndex) {
@@ -1161,6 +1183,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
             case KeyEvent.VK_UP -> upPressed = true;
             case KeyEvent.VK_DOWN -> downPressed = true;
             case KeyEvent.VK_SPACE -> spacePressed = true;
+            case KeyEvent.VK_F11 -> gameFrame.toggleFullScreen();
         }
     }
 
