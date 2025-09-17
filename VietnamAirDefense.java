@@ -303,6 +303,12 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
     currentLevel = level;
     levelData = LevelData.LEVELS[level - 1];
     showLevelIntro(level);
+    state = GameState.HISTORY_INTRO; // Pause game for intro
+    if (timer != null) timer.stop();
+    state = GameState.HISTORY_INTRO; // Pause game for intro
+    if (timer != null) timer.stop();
+    state = GameState.HISTORY_INTRO; // Pause game for intro
+    if (timer != null) timer.stop();
     
     // If this is level 1 (new game) reset score and snapshot; for other levels snapshot current score
     if (level == 1) {
@@ -992,19 +998,24 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
             repaint();
             return;
         }
+        // Dismiss level intro on SPACE
+        if (showLevelIntro && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            showLevelIntro = false;
+            state = GameState.PLAYING;
+            if (timer != null) timer.start();
+            repaint();
+            return;
+        }
+
         // Handle enemy index overlay open/close
         if (showEnemyIndex) {
             if (e.getKeyCode() == KeyEvent.VK_E || e.getKeyCode() == KeyEvent.VK_ESCAPE) {
                 showEnemyIndex = false;
                 // Resume game if it was paused for index overlay
                 if (state == GameState.PAUSED && timer != null) timer.stop();
-                if (state == GameState.PAUSED) setupVolumeSlider();
-                if (state == GameState.PLAYING && timer != null) timer.start();
                 repaint();
                 return;
             }
-            // Prevent any other key from doing anything while overlay is open
-            return;
         }
         // Open enemy index overlay with E in PAUSED or PLAYING
         if ((state == GameState.PAUSED || state == GameState.PLAYING) && e.getKeyCode() == KeyEvent.VK_E) {
@@ -1012,14 +1023,6 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
             hideVolumeSlider();
             // Pause game if in PLAYING state
             if (state == GameState.PLAYING && timer != null) timer.stop();
-            repaint();
-            return;
-        }
-        // Dismiss level intro on SPACE
-        if (showLevelIntro && e.getKeyCode() == KeyEvent.VK_SPACE) {
-            showLevelIntro = false;
-            state = GameState.HISTORY_INTRO;
-            if (timer != null) timer.start();
             repaint();
             return;
         }
