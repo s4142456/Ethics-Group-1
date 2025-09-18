@@ -1026,20 +1026,17 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
     
     @Override
     public void keyPressed(KeyEvent e) {
-        // Advance from history intro or summary to gameplay
-        if ((state == GameState.HISTORY_INTRO || state == GameState.HISTORY_SUMMARY) && e.getKeyCode() == KeyEvent.VK_SPACE) {
-            state = GameState.PLAYING;
-            if (timer != null) timer.start();
-            repaint();
-            return;
-        }
-        // Dismiss level intro on SPACE
-        if (showLevelIntro && e.getKeyCode() == KeyEvent.VK_SPACE) {
-            showLevelIntro = false;
-            state = GameState.PLAYING;
-            if (timer != null) timer.start();
-            repaint();
-            return;
+        // Start gameplay on SPACE from any intro/summary overlay (single press)
+        if (e.getKeyCode() == KeyEvent.VK_SPACE) {
+            boolean inHistory = (state == GameState.HISTORY_INTRO || state == GameState.HISTORY_SUMMARY);
+            if (inHistory || showLevelIntro) {
+                // Ensure the intro overlay is dismissed and gameplay begins
+                showLevelIntro = false;
+                state = GameState.PLAYING;
+                if (timer != null) timer.start();
+                repaint();
+                return;
+            }
         }
 
         // Handle enemy index overlay open/close
