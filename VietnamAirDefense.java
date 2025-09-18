@@ -344,7 +344,10 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         lives = 2;
         
         // Initialize player with level-specific speed
-        double playerSpeed = (level == 1) ? 3.0 : 6.0; // Slower in level 1
+        double playerSpeed;
+        if (level == 1 || level == 2) playerSpeed = 3.0;
+        else if (level == 3) playerSpeed = 5.0;
+        else playerSpeed = 6.0; // level 4
         player = new Player(WIDTH/2 - 30, HEIGHT - 80, 60, 40, 3, playerSpeed,
             levelData.playerSprite);
     // Set weapon mode per level: 1=AA,2=SAM,3=MiG,4=SAM
