@@ -1233,7 +1233,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
                     g2.drawString(shortName, tx, ty);
                 }
             }
-            // Wrap label if too long
+            // Wrap label if too long to fit in maxWidth
             java.util.List<String> lines = new java.util.ArrayList<>();
             if (destroyed) {
                 String[] words = label.split(" ");
