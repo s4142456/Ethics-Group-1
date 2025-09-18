@@ -321,10 +321,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
     currentLevel = level;
     levelData = LevelData.LEVELS[level - 1];
     showLevelIntro(level);
-    state = GameState.HISTORY_INTRO; // Pause game for intro
-    if (timer != null) timer.stop();
-    state = GameState.HISTORY_INTRO; // Pause game for intro
-    if (timer != null) timer.stop();
+    // Enter intro state and pause updates until SPACE is pressed
     state = GameState.HISTORY_INTRO; // Pause game for intro
     if (timer != null) timer.stop();
     
@@ -1068,8 +1065,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
                 score = 0;
                 destroyedTypes.clear(); // new session: reset enemy index
                 startLevel(1);
-                state = GameState.PLAYING;
-                if (timer != null) timer.start();
+                // Wait at the intro screen until SPACE is pressed
                 repaint();
                 return;
             }
@@ -1078,8 +1074,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
                 score = 0; // New session via level shortcut
                 destroyedTypes.clear(); // new session: reset enemy index
                 startLevel(1);
-                state = GameState.PLAYING;
-                if (timer != null) timer.start();
+                // Wait at the intro screen until SPACE is pressed
                 repaint();
                 return;
             }
@@ -1087,8 +1082,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
                 score = 0; // New session via level shortcut
                 destroyedTypes.clear(); // new session: reset enemy index
                 startLevel(2);
-                state = GameState.PLAYING;
-                if (timer != null) timer.start();
+                // Wait at the intro screen until SPACE is pressed
                 repaint();
                 return;
             }
@@ -1096,8 +1090,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
                 score = 0; // New session via level shortcut
                 destroyedTypes.clear(); // new session: reset enemy index
                 startLevel(3);
-                state = GameState.PLAYING;
-                if (timer != null) timer.start();
+                // Wait at the intro screen until SPACE is pressed
                 repaint();
                 return;
             }
@@ -1105,8 +1098,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
                 score = 0; // New session via level shortcut
                 destroyedTypes.clear(); // new session: reset enemy index
                 startLevel(4);
-                state = GameState.PLAYING;
-                if (timer != null) timer.start();
+                // Wait at the intro screen until SPACE is pressed
                 repaint();
                 return;
             }
@@ -1123,8 +1115,7 @@ class GamePanel extends JPanel implements ActionListener, KeyListener, MouseWhee
         if (showNextLevelScreen && e.getKeyCode() == KeyEvent.VK_SPACE) {
             showNextLevelScreen = false;
             startLevel(nextLevelToStart);
-            state = GameState.PLAYING;
-            if (timer != null) timer.start();
+            // Wait at the intro screen until SPACE is pressed
             repaint();
             return;
         }
